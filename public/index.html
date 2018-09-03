@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 	<head>
@@ -22,6 +23,8 @@
 		<script src="js/UPPERCASE-CORE/BROWSER.js"></script>
 		<script>BOX('UUI');</script>
 		<script src="js/UUI/BROWSER.js"></script>
+		<script>BOX('Yogurt');</script>
+		<script src="js/Yogurt/BROWSER.js"></script>
 		<script>BOX('FontAwesome');</script>
 		<script src="js/FontAwesome/BROWSER.js"></script>
 		<!-- 개발 모드 -->
@@ -40,6 +43,20 @@
 		</script>
 		<script src="js/skins.js"></script>
 		<script src="js/emoticons.js"></script>
+		<script>
+			ADD_FONT({
+				name : 'Noto Sans KR',
+				woff2 : 'https://fonts.gstatic.com/ea/notosanskr/v2/NotoSansKR-Regular.woff2',
+				woff : 'https://fonts.gstatic.com/ea/notosanskr/v2/NotoSansKR-Regular.woff',
+				otf : 'https://fonts.gstatic.com/ea/notosanskr/v2/NotoSansKR-Regular.otf'
+			});
+			BODY.addStyle({
+				fontFamily : 'Noto Sans KR'
+			});
+		</script>
+		<script src="js/layout.js"></script>
+		<script src="js/checklogin.js"></script>
+		<script src="js/loadicon.js"></script>
 		<script src="js/index.js"></script>
 	</body>
 </html>
