@@ -71,7 +71,22 @@ global.Layout = OBJECT({
 					}
 				}),
 				
-				title : 'devhellchat'
+				title : DIV({
+					style : {
+						marginTop : -2
+					},
+					c : 'devhellchat',
+					on : {
+						mouseover : (e, span) => {
+							span.empty();
+							span.append('개발자지옥챗');
+						},
+						mouseout : (e, span) => {
+							span.empty();
+							span.append('devhellchat');
+						}
+					}
+				})
 			}),
 	
 			/*leftMenu : DIV({

@@ -70,7 +70,7 @@ RUN(() => {
 		};
 		
 		// 시스템 메시지 추가
-		let addSystemMessage = (title, message, scroll) => {
+		let addSystemMessage = (title, message) => {
 			
 			let children = ['[' + title + '] '];
 			if (CHECK_IS_ARRAY(message) === true) {
@@ -105,7 +105,7 @@ RUN(() => {
 				c : children
 			}));
 			
-			if (scroll !== false) {
+			if (messageList.getScrollTop() >= messageList.getScrollHeight() - messageList.getHeight() - 10 === true) {
 				scrollToEnd();
 			}
 		};
@@ -761,8 +761,11 @@ RUN(() => {
 			});
 			
 			let names = '';
+			let originRecentlyUsers = recentlyUsers;
+			
 			recentlyUsers = [];
 			connections.forEach((connection) => {
+				
 				// 마지막 접속자와 비교하여 2분 미만 내에 커넥션을 유지한 사용자만
 				if (lastTime - connection.time < 2 * 60 * 1000) {
 					recentlyUsers.push({
@@ -770,6 +773,17 @@ RUN(() => {
 						userIconURL : connection.userIconURL,
 						name : connection.name
 					});
+					
+					// 새로 접속한 유저면, 알려줍니다.
+					let isNewConnectionUser = true;
+					EACH(originRecentlyUsers, (originRecentlyUser) => {
+						if (originRecentlyUser.userId === connection.userId) {
+							isNewConnectionUser = false;
+						}
+					});
+					if (isFirstShowingRecentlyUsers !== true && isNewConnectionUser === true) {
+						addSystemMessage(connection.name + '가 접속함. 인사 ㄱㄱ');
+					}
 				}
 			});
 			
