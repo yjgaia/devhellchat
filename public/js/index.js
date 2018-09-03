@@ -23,6 +23,11 @@ RUN(() => {
 	
 	CheckLogin((user) => {
 		
+		// 호출 허락 (아이폰은 지원안함)
+		if (global.Notification !== undefined && Notification.permission !== 'granted') {
+			Notification.requestPermission();
+		}
+		
 		let userIconURL = 'resource/default-icon.png';
 		let iconMap = {};
 		
@@ -109,6 +114,13 @@ RUN(() => {
 				scrollToEnd();
 			}
 		};
+		
+		// 화면 크기가 바뀌면 스크롤 맨 아래로
+		EVENT('resize', () => {
+			DELAY(() => {
+				scrollToEnd();
+			});
+		});
 		
 		// 메시지 입력 폼
 		let uploadInput;
@@ -782,7 +794,7 @@ RUN(() => {
 						}
 					});
 					if (isFirstShowingRecentlyUsers !== true && isNewConnectionUser === true) {
-						addSystemMessage(connection.name + '가 접속함. 인사 ㄱㄱ');
+						addSystemMessage(connection.name + '이(가) 접속함. 인사 ㄱㄱ');
 					}
 				}
 			});
