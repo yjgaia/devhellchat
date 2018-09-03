@@ -75,7 +75,7 @@ RUN(() => {
 		};
 		
 		// 시스템 메시지 추가
-		let addSystemMessage = (title, message) => {
+		let addSystemMessage = (title, message, scroll) => {
 			
 			let children = ['[' + title + '] '];
 			if (CHECK_IS_ARRAY(message) === true) {
@@ -110,7 +110,7 @@ RUN(() => {
 				c : children
 			}));
 			
-			if (messageList.getScrollTop() >= messageList.getScrollHeight() - messageList.getHeight() - 10 === true) {
+			if (scroll !== false) {
 				scrollToEnd();
 			}
 		};
@@ -121,6 +121,17 @@ RUN(() => {
 				scrollToEnd();
 			});
 		});
+		
+		let sendMessage = (message) => {
+			chatsRef.push({
+				userId : user.uid,
+				name : user.displayName,
+				userIconURL : userIconURL,
+				message : message
+			});
+		};
+		
+		Layout.setSendMessage(sendMessage);
 		
 		// 메시지 입력 폼
 		let uploadInput;
@@ -377,12 +388,7 @@ RUN(() => {
 						
 						// 메시지 전송
 						else {
-							chatsRef.push({
-								userId : user.uid,
-								name : user.displayName,
-								userIconURL : userIconURL,
-								message : message.trim()
-							});
+							sendMessage(message.trim());
 						}
 					}
 				}

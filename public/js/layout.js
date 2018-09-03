@@ -2,6 +2,8 @@ global.Layout = OBJECT({
 	
 	init : (inner, self) => {
 		
+		let sendMessage;
+		
 		let content;
 		let recentlyUserList;
 		let menuLayout = Yogurt.MenuLayout({
@@ -148,8 +150,9 @@ global.Layout = OBJECT({
 			EACH(users, (user) => {
 				
 				let icon;
-				recentlyUserList.append(DIV({
+				recentlyUserList.append(A({
 					style : {
+						display : 'block',
 						borderBottom : '1px solid #666',
 						padding : 10
 					},
@@ -163,13 +166,22 @@ global.Layout = OBJECT({
 							borderRadius : 5
 						},
 						src : LoadIcon.getUserIconURL(user.userId) === undefined ? 'resource/default-icon.png' : LoadIcon.getUserIconURL(user.userId)
-					}), user.name]
+					}), user.name],
+					on : {
+						tap : () => {
+							sendMessage('@' + user.name);
+						}
+					}
 				}));
 				
 				LoadIcon(user.userId, (url) => {
 					icon.setSrc(url);
 				});
 			});
+		};
+		
+		let setSendMessage = self.setSendMessage = (_sendMessage) => {
+			sendMessage = _sendMessage;
 		};
 	}
 });
