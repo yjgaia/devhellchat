@@ -72,9 +72,6 @@ global.Layout = OBJECT({
 				}),
 				
 				title : DIV({
-					style : {
-						marginTop : -2
-					},
 					c : 'devhellchat',
 					on : {
 						mouseover : (e, span) => {
