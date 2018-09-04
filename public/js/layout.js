@@ -52,7 +52,8 @@ global.Layout = OBJECT({
 				
 				title : DIV({
 					style : {
-						marginLeft : -15
+						marginLeft : -15,
+						userSelect : 'none'
 					},
 					c : ['🔥 ', SPAN({
 						style : {
@@ -84,6 +85,9 @@ global.Layout = OBJECT({
 			}),
 			
 			rightMenu : DIV({
+				style : {
+					userSelect : 'none'
+				},
 				c : [menu = DIV({
 					c : DIV({
 						style : {
