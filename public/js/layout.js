@@ -72,6 +72,13 @@ global.Layout = OBJECT({
 								span.append('devhellchat');
 							}
 						}
+					}), SPAN({
+						style : {
+							marginLeft : 7,
+							color : '#666',
+							fontSize : 18
+						},
+						c : '0.1'
 					})]
 				})
 			}),
