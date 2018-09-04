@@ -11,7 +11,7 @@ global.SKINS = {
 	다크 : {
 		backgroundColor : '#252526',
 		color : '#dcdcdc',
-		nameColor : '#569cd6',
+		nameColor : '#6699cc',
 		systemColor : 'rgb(114, 137, 218)',
 		lineColor : '#333'
 	}

@@ -2,6 +2,10 @@ global.CheckLogin = METHOD((m) => {
 	
 	let user;
 	
+	let getUser = m.getUser = () => {
+		return user;
+	};
+	
 	return {
 		
 		run : (callback) => {

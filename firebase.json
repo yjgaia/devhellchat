@@ -15,6 +15,16 @@
 	    	"key" : "Cache-Control",
 	    	"value" : "no-cache, no-store, must-revalidate"
 	    }]
+    }],
+    "rewrites": [{
+    	"source": "/login",
+    	"destination": "/index.html"
+    }, {
+    	"source": "/user/**",
+    	"destination": "/index.html"
+    }, {
+    	"source": "/ugz",
+    	"destination": "/index.html"
     }]
   },
   "storage": {
