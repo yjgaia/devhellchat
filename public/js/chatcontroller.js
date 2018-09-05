@@ -22,10 +22,21 @@ global.ChatController = OBJECT({
 			skinData = SKINS.기본
 		}
 		
+		let isHiding = true;
 		let messageList;
 		let messageForm;
 		
+		let scrollToEnd = () => {
+			if (messageList !== undefined) {
+				messageList.scrollTo({
+					top : 999999
+				});
+			}
+		};
+		
 		let hide = self.hide = () => {
+			isHiding = true;
+			
 			if (messageList !== undefined) {
 				messageList.hide();
 			}
@@ -35,16 +46,26 @@ global.ChatController = OBJECT({
 		};
 		
 		let show = self.show = () => {
+			isHiding = false;
+			
 			if (messageList !== undefined) {
 				messageList.show();
 			}
 			if (messageForm !== undefined) {
 				messageForm.show();
 			}
+			
+			scrollToEnd();
+		};
+		
+		let isInited = false;
+		let checkIsInited = self.checkIsInited = () => {
+			return isInited;
 		};
 		
 		// 컨트롤러를 초기화합니다.
 		let init = self.init = (user) => {
+			isInited = true;
 			
 			// 호출 허락 (아이폰은 지원안함)
 			if (global.Notification !== undefined && Notification.permission !== 'granted') {
@@ -87,12 +108,6 @@ global.ChatController = OBJECT({
 					}
 				}
 			}).appendTo(Layout.getContent());
-			
-			let scrollToEnd = () => {
-				messageList.scrollTo({
-					top : 999999
-				});
-			};
 			
 			// 시스템 메시지 추가
 			let addSystemMessage = (title, message, scroll) => {
@@ -230,6 +245,9 @@ global.ChatController = OBJECT({
 									on : {
 										touchstart : () => {
 											showRecentlyUsers();
+											DELAY(() => {
+												messageInput.focus();
+											});
 										}
 									}
 								}), CLEAR_BOTH()]
@@ -279,7 +297,7 @@ global.ChatController = OBJECT({
 											fontWeight : 'bold'
 										},
 										c : '아이콘 설정'
-									}),uploadInput = INPUT({
+									}), uploadInput = INPUT({
 										style : {
 											position : 'fixed',
 											left : -999999,
@@ -290,24 +308,28 @@ global.ChatController = OBJECT({
 											change : () => {
 												let file = uploadInput.getEl().files[0];
 												
-												if (file.size !== undefined && file.size <= 10240) {
+												if (file !== undefined) {
 													
-													description.empty();
-													description.append('업로드 중...');
-													
-													iconsRef.child(user.uid).put(file).then((snapshot) => {
-														iconsRef.child(user.uid).getDownloadURL().then((url) => {
-															
-															iconPreview.setSrc(url);
-															
-															description.empty();
-															description.append('10KB 이하 PNG만 가능');
+													if (file.size !== undefined && file.size <= 10240) {
+														
+														description.empty();
+														description.append('업로드 중...');
+														
+														iconsRef.child(user.uid).put(file).then((snapshot) => {
+															iconsRef.child(user.uid).getDownloadURL().then((url) => {
+																
+																iconPreview.setSrc(url);
+																
+																description.empty();
+																description.append('10KB 이하 PNG만 가능');
+															});
 														});
-													});
-												}
-												
-												else {
-													alert('용량이 너무큼! 최대 용량 10KB 임');
+													}
+													
+													else {
+														alert('용량이 너무큼! 최대 용량 10KB 임');
+														uploadInput.setValue('');
+													}
 												}
 											}
 										}
@@ -346,12 +368,17 @@ global.ChatController = OBJECT({
 						change : () => {
 							let file = uploadInput.getEl().files[0];
 							
-							if (file.size !== undefined && file.size <= MAX_UPLOAD_FILE_SIZE) {
-								uploadFile(file);
-							}
-							
-							else {
-								alert('용량이 너무큼! 최대 용량 ' + INTEGER(MAX_UPLOAD_FILE_SIZE / 1024 / 1024) + 'MB 임');
+							if (file !== undefined) {
+								
+								if (file.size !== undefined && file.size <= MAX_UPLOAD_FILE_SIZE) {
+									uploadFile(file);
+									uploadInput.setValue('');
+								}
+								
+								else {
+									alert('용량이 너무큼! 최대 용량 ' + INTEGER(MAX_UPLOAD_FILE_SIZE / 1024 / 1024) + 'MB 임');
+									uploadInput.setValue('');
+								}
 							}
 						}
 					}
@@ -450,8 +477,8 @@ global.ChatController = OBJECT({
 								
 								else if (command === '이모티콘') {
 									let emoticonStr = '';
-									EACH(EMOTICONS, (emoticon, i) => {
-										if (i > 0) {
+									EACH(EMOTICONS, (notUsing, emoticon) => {
+										if (emoticonStr !== '') {
 											emoticonStr += ', ';
 										}
 										emoticonStr += emoticon;
@@ -779,10 +806,7 @@ global.ChatController = OBJECT({
 										let emoticonStr = match[0];
 										let emoticon = emoticonStr.substring(1, emoticonStr.length - 1).toLowerCase();
 										
-										if (CHECK_IS_IN({
-											array : EMOTICONS,
-											value : emoticon
-										}) === true) {
+										if (EMOTICONS[emoticon] !== undefined) {
 											
 											let index = message.indexOf(emoticonStr);
 											
@@ -792,7 +816,7 @@ global.ChatController = OBJECT({
 												style : {
 													marginBottom : -4
 												},
-												src : 'resource/emoticon/' + emoticon + '.png',
+												src : 'resource/emoticon/' + emoticon + (EMOTICONS[emoticon].isGIF === true ? '.gif' : '.png'),
 												on : {
 													load : () => {
 														// 로딩이 다 되면 스크롤 끝으로
@@ -938,6 +962,10 @@ global.ChatController = OBJECT({
 					});
 					e.stopDefault();
 				});
+			}
+			
+			if (isHiding === true) {
+				hide();
 			}
 		};
 	}

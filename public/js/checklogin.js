@@ -19,18 +19,13 @@ global.CheckLogin = METHOD((m) => {
 					
 					let authContainer = DIV({
 						style : {
-							onDisplayResize : (width) => {
-								if (width <= 480) {
-									return {
-										padding : 0
-									};
-								} else {
-									return {
-										padding : '20px 0'
-									};
-								}
+							paddingBottom : 20
+						},
+						c : AboutPanel({
+							style : {
+								marginBottom : 20
 							}
-						}
+						})
 					}).appendTo(Layout.getContent());
 					
 					// 인증 처리

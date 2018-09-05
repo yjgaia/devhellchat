@@ -10,13 +10,16 @@
       "**/node_modules/**"
     ],
     "headers": [{
-    	"source": "/js/**",
+    	"source": "/**",
     	"headers": [{
 	    	"key" : "Cache-Control",
 	    	"value" : "no-cache, no-store, must-revalidate"
 	    }]
     }],
     "rewrites": [{
+    	"source": "/about",
+    	"destination": "/index.html"
+    }, {
     	"source": "/login",
     	"destination": "/index.html"
     }, {

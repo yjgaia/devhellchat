@@ -55,10 +55,7 @@ global.Layout = OBJECT({
 						marginLeft : -15,
 						userSelect : 'none'
 					},
-					c : ['🔥 ', SPAN({
-						style : {
-							cursor : 'default'
-						},
+					c : ['🔥 ', A({
 						c : 'devhellchat',
 						on : {
 							touchstart : (e) => {
@@ -71,6 +68,9 @@ global.Layout = OBJECT({
 							mouseout : (e, span) => {
 								span.empty();
 								span.append('devhellchat');
+							},
+							tap : () => {
+								GO('');
 							}
 						}
 					}), SPAN({
@@ -96,14 +96,7 @@ global.Layout = OBJECT({
 						},
 						c : '로그인 ㄱㄱ'
 					})
-				}), recentlyUserList = DIV({
-					c : DIV({
-						style : {
-							padding : 10
-						},
-						c : '접속자 로딩중...'
-					})
-				})]
+				}), recentlyUserList = DIV()]
 			}),
 			
 			c : content = DIV({
@@ -133,7 +126,12 @@ global.Layout = OBJECT({
 					borderBottom : '1px solid #666',
 					padding : 10
 				},
-				c : '도움말 (개발중)'
+				c : '채팅방 소개',
+				on : {
+					tap : () => {
+						GO('about');
+					}
+				}
 			}));
 			
 			menu.append(A({
@@ -170,6 +168,13 @@ global.Layout = OBJECT({
 					padding : 10
 				},
 				c : '기능 추가 요청 (개발중)'
+			}));
+			
+			recentlyUserList.append(DIV({
+				style : {
+					padding : 10
+				},
+				c : '접속자 로딩중...'
 			}));
 		};
 		
