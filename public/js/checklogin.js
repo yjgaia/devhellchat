@@ -23,6 +23,7 @@ global.CheckLogin = METHOD((m) => {
 						},
 						c : AboutPanel({
 							style : {
+								padding : 20,
 								marginBottom : 20
 							}
 						})

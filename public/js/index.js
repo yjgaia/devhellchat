@@ -22,9 +22,46 @@ RUN(() => {
 				return VIEW;
 			},
 			init : (inner) => {
-				let aboutPanel = AboutPanel().appendTo(Layout.getContent());
+				
+				let wrapper = DIV({
+					c : [
+					
+					// 뒤로가기
+					UUI.BUTTON_H({
+						style : {
+							position : 'absolute',
+							left : 10,
+							top : 10
+						},
+						icon : FontAwesome.GetIcon({
+							style : {
+								fontSize : 20
+							},
+							key : 'arrow-left'
+						}),
+						spacing : 10,
+						title : SPAN({
+							style : {
+								fontSize : 14
+							},
+							c : '채팅으로'
+						}),
+						on : {
+							tap : () => {
+								GO('');
+							}
+						}
+					}),
+					
+					AboutPanel({
+						style : {
+							padding : '60px 40px'
+						}
+					})]
+				}).appendTo(Layout.getContent());
+				
 				inner.on('close', () => {
-					aboutPanel.remove();
+					wrapper.remove();
 				});
 			}
 		})

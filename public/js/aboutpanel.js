@@ -6,37 +6,7 @@ global.AboutPanel = CLASS({
 	
 	init : (inner, self, user) => {
 		
-		// 뒤로가기
-		self.append(UUI.BUTTON_H({
-			style : {
-				position : 'absolute',
-				left : 10,
-				top : 10
-			},
-			icon : FontAwesome.GetIcon({
-				style : {
-					fontSize : 20
-				},
-				key : 'arrow-left'
-			}),
-			spacing : 10,
-			title : SPAN({
-				style : {
-					fontSize : 14
-				},
-				c : '채팅으로'
-			}),
-			on : {
-				tap : () => {
-					GO('');
-				}
-			}
-		}));
-		
 		self.append(DIV({
-			style : {
-				padding : '60px 40px'
-			},
 			c : [H1({
 				style : {
 					fontSize : 25,
