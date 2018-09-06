@@ -12,6 +12,12 @@
 		"chats": {
 			".read": "auth != null",
 			".write": "auth != null"
+		},
+		"users": {
+			"$id": {
+				".read": "auth != null",
+				".write": "$id === auth.uid"
+			}
 		}
 	}
 }

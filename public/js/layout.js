@@ -71,6 +71,7 @@ global.Layout = OBJECT({
 							},
 							tap : () => {
 								GO('');
+								menuLayout.hideRightMenu();
 							}
 						}
 					}), SPAN({
@@ -130,6 +131,7 @@ global.Layout = OBJECT({
 				on : {
 					tap : () => {
 						GO('about');
+						menuLayout.hideRightMenu();
 					}
 				}
 			}));
@@ -237,6 +239,8 @@ global.Layout = OBJECT({
 									}),
 									on : {
 										tap : () => {
+											menuLayout.hideRightMenu();
+											
 											UserPanel({
 												userId : user.userId,
 												name : user.name,
@@ -263,6 +267,8 @@ global.Layout = OBJECT({
 									}),
 									on : {
 										tap : () => {
+											menuLayout.hideRightMenu();
+											
 											ChatController.sendMessage('@' + user.name);
 										}
 									}
