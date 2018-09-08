@@ -8,5 +8,7 @@ global.EMOTICONS = {
 	속보 : {},
 	개구리 : {isGIF : true},
 	압박 : {isGIF : true},
-	대머리깎아라 : {isGIF : true}
+	대머리깎아라 : {isGIF : true},
+	아님말고 : {isGIF : true},
+	대박 : {}
 };

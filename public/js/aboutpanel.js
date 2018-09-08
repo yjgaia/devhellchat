@@ -13,11 +13,16 @@ global.AboutPanel = CLASS({
 					fontWeight : 'bold'
 				},
 				c : 'devhellchat 소개'
+			}), IMG({
+				style : {
+					marginTop : 20
+				},
+				src : 'resource/icon.png'
 			}), P({
 				style : {
-					marginTop : 10
+					marginTop : 20
 				},
-				c : 'devhellchat은 비주류 게임 엔진(읔니티, 언뤼얼 노노)들을 다루는 채팅 커뮤니티임\n개발하다 스트레스 받으면 놀러와서 풀고가삼'
+				c : 'devhellchat(개발자지옥챗)은 비주류 게임 엔진들을 다루는 채팅 커뮤니티임(읔니티, 언뤼얼 노노)\n개발하다 스트레스 받으면 놀러와서 풀고가도댐'
 			})]
 		}));
 	}
