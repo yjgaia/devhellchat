@@ -816,7 +816,7 @@ global.ChatController = OBJECT({
 												style : {
 													marginBottom : -4
 												},
-												src : 'resource/emoticon/' + emoticon + (EMOTICONS[emoticon].isGIF === true ? '.gif' : '.png'),
+												src : 'resource/emoticon/' + emoticon + (EMOTICONS[emoticon].isGIF === true ? '.gif' : '.png') + (EMOTICONS[emoticon].isNoCaching === true ? '?' + Date.now() : ''),
 												on : {
 													load : () => {
 														// 로딩이 다 되면 스크롤 끝으로
