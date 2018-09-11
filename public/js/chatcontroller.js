@@ -754,7 +754,12 @@ global.ChatController = OBJECT({
 							}
 						}) : RUN(() => {
 							
-							let message = chatData.message;
+							let originMessage = chatData.message;
+							let message = originMessage;
+							
+							if (message.length > 200) {
+								message = message.substring(0, 200);
+							}
 							
 							// 호출 기능
 							if (chatData.isCalled !== true && chatData.name !== user.displayName && (message + ' ').indexOf('@' + user.displayName + ' ') !== -1) {
@@ -873,6 +878,54 @@ global.ChatController = OBJECT({
 								
 								replaceLink();
 							});
+							
+							// 너무 긴 메시지면 더보기 추가
+							if (message !== originMessage) {
+								children.push(' ...');
+								children.push(A({
+									style : {
+										textDecoration : 'underline'
+									},
+									c : '[더보기]',
+									on : {
+										tap : () => {
+											Yogurt.Alert({
+												style : {
+													onDisplayResize : (width) => {
+														if (width < 800) {
+															return {
+																width : 300
+															};
+														} else if (width < 1200) {
+															return {
+																width : 600
+															};
+														} else {
+															return {
+																width : 1000
+															};
+														}
+													}
+												},
+												contentStyle : {
+													padding : 0
+												},
+												msg : DIV({
+													style : {
+														height : 300,
+														overflowY : 'scroll',
+														fontSize : 14,
+														padding : 10,
+														lineHeight : '1.4em',
+														textAlign : 'left'
+													},
+													c : originMessage
+												})
+											});
+										}
+									}
+								}));
+							}
 							
 							return SPAN({
 								c : children

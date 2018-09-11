@@ -11,5 +11,6 @@ global.EMOTICONS = {
 	대머리깎아라 : {isGIF : true, isNoCaching : true},
 	아님말고 : {isGIF : true},
 	대박 : {},
-	고블린 : {}
+	고블린 : {},
+	끼에에엑 : {isGIF : true}
 };
