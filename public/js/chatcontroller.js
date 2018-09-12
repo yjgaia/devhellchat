@@ -844,9 +844,12 @@ global.ChatController = OBJECT({
 															scrollToEnd();
 														}
 													},
-													doubletap : () => {
+													doubletap : (e) => {
+														
 														messageInput.setValue(messageInput.getValue() + ':' + emoticon + ':');
 														messageInput.focus();
+														
+														e.stopDefault();
 													}
 												}
 											}));
