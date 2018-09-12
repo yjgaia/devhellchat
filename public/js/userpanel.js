@@ -16,7 +16,9 @@ global.UserPanel = CLASS({
 			
 			wrapper = DIV({
 				style : {
-					fontSize : 16
+					fontSize : 16,
+					height : '100%',
+					overflowY : 'scroll'
 				},
 				c : [
 				// 뒤로가기

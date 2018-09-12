@@ -502,7 +502,7 @@ global.ChatController = OBJECT({
 										}
 										emoticonStr += emoticon;
 									});
-									addSystemMessage('사용법', '메시지 중간에 :이모티콘:과 같은 형태로 사용\n[이모티콘 종류] ' + emoticonStr);
+									addSystemMessage('사용법', '메시지 중간에 :이모티콘:과 같은 형태로 사용, 다른 사람이 쓴 이모티콘을 더블클릭하면 복사 가능\n[이모티콘 종류] ' + emoticonStr);
 								}
 								
 								else if (command === '로그아웃') {
