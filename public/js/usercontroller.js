@@ -77,6 +77,8 @@ global.UserController = OBJECT({
 						// 레벨 업!
 						if (userData.level < resultLevel) {
 							ChatController.addSystemMessage('레벨 업!', '레벨이 ' + resultLevel + '이 되었음ㅋㅋ 기모띠');
+							
+							userData.coin += resultLevel * 10;
 						}
 						
 						userData.level = resultLevel;
