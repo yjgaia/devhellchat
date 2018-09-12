@@ -62,7 +62,7 @@ global.ContextMenu = CLASS((cls) => {
 			
 			if (self.getHeight() + self.getStyle('top') > WIN_HEIGHT()) {
 				self.addStyle({
-					left : WIN_HEIGHT() - self.getHeight()
+					top : WIN_HEIGHT() - self.getHeight()
 				});
 			}
 		}

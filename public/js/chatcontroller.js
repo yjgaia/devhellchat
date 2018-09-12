@@ -110,7 +110,7 @@ global.ChatController = OBJECT({
 			}).appendTo(Layout.getContent());
 			
 			// 시스템 메시지 추가
-			let addSystemMessage = (title, message, scroll) => {
+			let addSystemMessage = self.addSystemMessage = (title, message, scroll) => {
 				
 				let isToScrollBottom = messageList.getScrollTop() >= messageList.getScrollHeight() - messageList.getHeight() - 10;
 				
@@ -174,12 +174,15 @@ global.ChatController = OBJECT({
 			});
 			
 			let sendMessage = self.sendMessage = (message) => {
+				
 				chatsRef.push({
 					userId : user.uid,
 					name : user.displayName,
 					userIconURL : ConnectionController.getUserIconURL(),
 					message : message
 				});
+				
+				UserController.increaseEXP(10);
 			};
 			
 			// 메시지 입력 폼
@@ -248,6 +251,22 @@ global.ChatController = OBJECT({
 											DELAY(() => {
 												messageInput.focus();
 											});
+										}
+									}
+								}), A({
+									style : {
+										marginLeft : 5,
+										flt : 'left',
+										padding : '4px 8px',
+										border : '1px solid #999',
+										backgroundColor : '#eee',
+										color : '#000',
+										borderRadius : 3
+									},
+									c : '내 정보 보기',
+									on : {
+										touchstart : () => {
+											GO('user/' + user.uid);
 										}
 									}
 								}), CLEAR_BOTH()]
@@ -513,7 +532,7 @@ global.ChatController = OBJECT({
 					left : 5,
 					bottom : 0
 				},
-				src : 'resource/loading.svg'
+				src : '/resource/loading.svg'
 			}).appendTo(messageList);
 			
 			// 파일 업로드 처리
@@ -656,11 +675,7 @@ global.ChatController = OBJECT({
 											}),
 											on : {
 												tap : () => {
-													UserPanel({
-														userId : chatData.userId,
-														name : chatData.name,
-														userIconURL : chatData.userIconURL
-													});
+													GO('user/' + chatData.userId);
 												}
 											}
 										}), LI({
@@ -729,7 +744,7 @@ global.ChatController = OBJECT({
 													marginTop : 10,
 													height : 40
 												},
-												src : 'resource/loading.svg'
+												src : '/resource/loading.svg'
 											})
 										}).appendTo(BODY);
 										
@@ -821,13 +836,17 @@ global.ChatController = OBJECT({
 												style : {
 													marginBottom : -4
 												},
-												src : 'resource/emoticon/' + emoticon + (EMOTICONS[emoticon].isGIF === true ? '.gif' : '.png') + (EMOTICONS[emoticon].isNoCaching === true ? '?' + Date.now() : ''),
+												src : '/resource/emoticon/' + emoticon + (EMOTICONS[emoticon].isGIF === true ? '.gif' : '.png') + (EMOTICONS[emoticon].isNoCaching === true ? '?' + Date.now() : ''),
 												on : {
 													load : () => {
 														// 로딩이 다 되면 스크롤 끝으로
 														if (isToScrollBottom === true || chatData.userId === user.uid) {
 															scrollToEnd();
 														}
+													},
+													doubletap : () => {
+														messageInput.setValue(messageInput.getValue() + ':' + emoticon + ':');
+														messageInput.focus();
 													}
 												}
 											}));

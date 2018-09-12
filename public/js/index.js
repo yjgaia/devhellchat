@@ -67,6 +67,11 @@ RUN(() => {
 		})
 	});
 	
+	MATCH_VIEW({
+		uri : 'user/{userId}',
+		target : UserPanel
+	});
+	
 	// 로그인 처리
 	CheckLogin((user) => {
 		
@@ -74,6 +79,7 @@ RUN(() => {
 		Layout.showMenu();
 		
 		// 컨트롤러들 초기화
+		UserController.init(user);
 		ChatController.init(user);
 		ConnectionController.init(user);
 	});

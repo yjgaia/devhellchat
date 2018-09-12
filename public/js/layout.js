@@ -241,11 +241,7 @@ global.Layout = OBJECT({
 										tap : () => {
 											menuLayout.hideRightMenu();
 											
-											UserPanel({
-												userId : user.userId,
-												name : user.name,
-												userIconURL : user.userIconURL
-											});
+											GO('user/' + user.userId);
 										}
 									}
 								}), LI({

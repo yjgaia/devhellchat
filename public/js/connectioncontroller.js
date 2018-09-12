@@ -6,7 +6,7 @@ global.ConnectionController = OBJECT({
 		let connectionsRef = firebase.database().ref('connections');
 		
 		// 로그인한 유저의 아이콘
-		let userIconURL = 'resource/default-icon.png';
+		let userIconURL = '/resource/default-icon.png';
 		let getUserIconURL = self.getUserIconURL = () => {
 			return userIconURL;
 		};
