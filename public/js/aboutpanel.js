@@ -29,6 +29,19 @@ global.AboutPanel = CLASS({
 					textDecoration : 'underline'
 				},
 				c : '단, 여기서 싸우거나 다른 사람한테 시비걸거나 비꼬거나 하면 즉각 처단함.\n이상한 놈이 있으면 싸우지말고 그냥 무시하셈'
+			}), DIV({
+				style : {
+					marginTop : 20
+				},
+				c : A({
+					style : {
+						color : '#4183c4',
+						textDecoration : 'underline'
+					},
+					target : '_blank',
+					href : 'https://github.com/Hanul/devhellchat',
+					c : 'devhellchat 소스코드'
+				})
 			})]
 		}));
 	}
