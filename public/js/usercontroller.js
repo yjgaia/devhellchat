@@ -81,6 +81,7 @@ global.UserController = OBJECT({
 							userData.coin += resultLevel * 10;
 						}
 						
+						userData.coin += exp;
 						userData.level = resultLevel;
 					}
 					return userData;
