@@ -505,12 +505,29 @@ global.ChatController = OBJECT({
 									addSystemMessage('사용법', '메시지 중간에 :이모티콘:과 같은 형태로 사용, 다른 사람이 쓴 이모티콘을 더블클릭하면 복사 가능\n[이모티콘 종류] ' + emoticonStr);
 								}
 								
+								else if (command === '처치') {
+									
+									if (args.length === 0) {
+										addSystemMessage('사용법', '/처치 [이름]');
+									}
+									
+									else {
+										chatsRef.push({
+											userId : user.uid,
+											name : user.displayName,
+											userIconURL : ConnectionController.getUserIconURL(),
+											targetName : args[0],
+											isEliminated : true
+										});
+									}
+								}
+								
 								else if (command === '로그아웃') {
 									firebase.auth().signOut();
 								}
 								
 								else {
-									addSystemMessage('명령어', '/명령어, /닉네임, /접속자, /스킨, /이모티콘, /로그아웃');
+									addSystemMessage('명령어', '/명령어, /닉네임, /접속자, /스킨, /이모티콘, /처치, /로그아웃');
 								}
 							}
 							
@@ -709,7 +726,10 @@ global.ChatController = OBJECT({
 								fontSize : 0
 							},
 							c : ' : '
-						}), chatData.downloadURL !== undefined ? A({
+						}),
+						
+						// 업로드인 경우
+						chatData.downloadURL !== undefined ? A({
 							style : {
 								fontWeight : 'bold',
 								textDecoration : 'underline'
@@ -767,192 +787,230 @@ global.ChatController = OBJECT({
 									}
 								}
 							}
-						}) : RUN(() => {
+						})
+						
+						:
+						
+						(
+							chatData.isEliminated === true ?
 							
-							let originMessage = chatData.message;
-							let message = originMessage;
+							// 처치인 경우
+							SPAN({
+								style : {
+									fontFamily : 'Koverwatch',
+									fontStyle : 'italic',
+									textShadow : TextBorderShadow('#333'),
+									fontSize : 20,
+									letterSpacing : 2
+								},
+								c : [SPAN({
+									style : {
+										color : '#ff1a1a'
+									},
+									c : chatData.targetName
+								}), SPAN({
+									style : {
+										color : '#fff'
+									},
+									c : ' 처치'
+								}), SPAN({
+									style : {
+										color : '#ff1a1a'
+									},
+									c : ' (+100) '
+								})]
+							})
 							
-							if (message.length > 200) {
-								message = message.substring(0, 200);
-							}
+							:
 							
-							// 호출 기능
-							if (chatData.isCalled !== true && chatData.name !== user.displayName && (message + ' ').indexOf('@' + user.displayName + ' ') !== -1) {
+							// 일반 메시지인 경우
+							RUN(() => {
 								
-								// 아이폰은 지원 안함
-								if (global.Notification === undefined || Notification.permission !== 'granted') {
-									DELAY(() => {
-										chatsRef.push({
-											userId : user.uid,
-											name : user.displayName,
-											userIconURL : ConnectionController.getUserIconURL(),
-											message : '(호출 기능이 차단된 유저입니다)'
-										});
-									});
+								let originMessage = chatData.message;
+								let message = originMessage;
+								
+								if (message.length > 200) {
+									message = message.substring(0, 200);
 								}
 								
-								else if (document.hasFocus() !== true) {
-									new Notification(chatData.name, {
-										body : message,
-									}).onclick = () => {
-										focus();
-									};
-								}
-								
-								let updates = {};
-								chatData.isCalled = true;
-								updates[snapshot.key] = chatData;
-								chatsRef.update(updates);
-							}
-							
-							let children = [];
-							
-							EACH(message.split(' '), (message, i) => {
-								
-								if (i > 0) {
-									children.push(' ');
-								}
-								
-								// 이모티콘을 찾아 교체합니다.
-								let replaceEmoticon = (message) => {
+								// 호출 기능
+								if (chatData.isCalled !== true && chatData.name !== user.displayName && (message + ' ').indexOf('@' + user.displayName + ' ') !== -1) {
 									
-									let match = message.match(/:[^:]*:/);
-									if (match === TO_DELETE) {
-										children.push(message);
+									// 아이폰은 지원 안함
+									if (global.Notification === undefined || Notification.permission !== 'granted') {
+										DELAY(() => {
+											chatsRef.push({
+												userId : user.uid,
+												name : user.displayName,
+												userIconURL : ConnectionController.getUserIconURL(),
+												message : '(호출 기능이 차단된 유저입니다)'
+											});
+										});
 									}
 									
-									else {
+									else if (document.hasFocus() !== true) {
+										new Notification(chatData.name, {
+											body : message,
+										}).onclick = () => {
+											focus();
+										};
+									}
+									
+									let updates = {};
+									chatData.isCalled = true;
+									updates[snapshot.key] = chatData;
+									chatsRef.update(updates);
+								}
+								
+								let children = [];
+								
+								EACH(message.split(' '), (message, i) => {
+									
+									if (i > 0) {
+										children.push(' ');
+									}
+									
+									// 이모티콘을 찾아 교체합니다.
+									let replaceEmoticon = (message) => {
 										
-										let emoticonStr = match[0];
-										let emoticon = emoticonStr.substring(1, emoticonStr.length - 1).toLowerCase();
-										
-										if (EMOTICONS[emoticon] !== undefined) {
-											
-											let index = message.indexOf(emoticonStr);
-											
-											children.push(message.substring(0, index));
-											
-											children.push(IMG({
-												style : {
-													marginBottom : -4
-												},
-												src : '/resource/emoticon/' + emoticon + (EMOTICONS[emoticon].isGIF === true ? '.gif' : '.png') + (EMOTICONS[emoticon].isNoCaching === true ? '?' + Date.now() : ''),
-												on : {
-													load : () => {
-														// 로딩이 다 되면 스크롤 끝으로
-														if (isToScrollBottom === true || chatData.userId === user.uid) {
-															scrollToEnd();
-														}
-													},
-													doubletap : (e) => {
-														
-														messageInput.setValue(messageInput.getValue() + ':' + emoticon + ':');
-														messageInput.focus();
-														
-														e.stopDefault();
-													}
-												}
-											}));
-											
-											message = replaceEmoticon(message.substring(index + emoticonStr.length));
+										let match = message.match(/:[^:]*:/);
+										if (match === TO_DELETE) {
+											children.push(message);
 										}
 										
 										else {
-											children.push(message);
-										}
-									}
-									
-									return message;
-								};
-								
-								// 링크를 찾아 교체합니다.
-								let replaceLink = () => {
-									
-									let match = message.match(URL_REGEX);
-									if (match === TO_DELETE) {
-										message = replaceEmoticon(message);
-									}
-									
-									else {
-										
-										let url = match[0];
-										if (url.indexOf(' ') !== -1) {
-											url = url.substring(0, url.indexOf(' '));
-										}
-										
-										let index = message.indexOf(url);
-										
-										message = replaceEmoticon(message.substring(0, index));
-										message = message.substring(index + url.length);
-										
-										children.push(A({
-											style : {
-												textDecoration : 'underline'
-											},
-											target : '_blank',
-											href : url,
-											c : url
-										}));
-										
-										replaceLink();
-									}
-								};
-								
-								replaceLink();
-							});
-							
-							// 너무 긴 메시지면 더보기 추가
-							if (message !== originMessage) {
-								children.push(' ...');
-								children.push(A({
-									style : {
-										textDecoration : 'underline'
-									},
-									c : '[더보기]',
-									on : {
-										tap : () => {
-											Yogurt.Alert({
-												style : {
-													onDisplayResize : (width) => {
-														if (width < 800) {
-															return {
-																width : 300
-															};
-														} else if (width < 1200) {
-															return {
-																width : 600
-															};
-														} else {
-															return {
-																width : 1000
-															};
+											
+											let emoticonStr = match[0];
+											let emoticon = emoticonStr.substring(1, emoticonStr.length - 1).toLowerCase();
+											
+											if (EMOTICONS[emoticon] !== undefined) {
+												
+												let index = message.indexOf(emoticonStr);
+												
+												children.push(message.substring(0, index));
+												
+												children.push(IMG({
+													style : {
+														marginBottom : -4
+													},
+													src : '/resource/emoticon/' + emoticon + (EMOTICONS[emoticon].isGIF === true ? '.gif' : '.png') + (EMOTICONS[emoticon].isNoCaching === true ? '?' + Date.now() : ''),
+													on : {
+														load : () => {
+															// 로딩이 다 되면 스크롤 끝으로
+															if (isToScrollBottom === true || chatData.userId === user.uid) {
+																scrollToEnd();
+															}
+														},
+														doubletap : (e) => {
+															
+															messageInput.setValue(messageInput.getValue() + ':' + emoticon + ':');
+															messageInput.focus();
+															
+															e.stopDefault();
 														}
 													}
-												},
-												contentStyle : {
-													padding : 0
-												},
-												msg : DIV({
-													style : {
-														height : 300,
-														overflowY : 'scroll',
-														fontSize : 14,
-														padding : 10,
-														lineHeight : '1.4em',
-														textAlign : 'left'
-													},
-													c : originMessage
-												})
-											});
+												}));
+												
+												message = replaceEmoticon(message.substring(index + emoticonStr.length));
+											}
+											
+											else {
+												children.push(message);
+											}
 										}
-									}
-								}));
-							}
-							
-							return SPAN({
-								c : children
-							});
-						})]
+										
+										return message;
+									};
+									
+									// 링크를 찾아 교체합니다.
+									let replaceLink = () => {
+										
+										let match = message.match(URL_REGEX);
+										if (match === TO_DELETE) {
+											message = replaceEmoticon(message);
+										}
+										
+										else {
+											
+											let url = match[0];
+											if (url.indexOf(' ') !== -1) {
+												url = url.substring(0, url.indexOf(' '));
+											}
+											
+											let index = message.indexOf(url);
+											
+											message = replaceEmoticon(message.substring(0, index));
+											message = message.substring(index + url.length);
+											
+											children.push(A({
+												style : {
+													textDecoration : 'underline'
+												},
+												target : '_blank',
+												href : url,
+												c : url
+											}));
+											
+											replaceLink();
+										}
+									};
+									
+									replaceLink();
+								});
+								
+								// 너무 긴 메시지면 더보기 추가
+								if (message !== originMessage) {
+									children.push(' ...');
+									children.push(A({
+										style : {
+											textDecoration : 'underline'
+										},
+										c : '[더보기]',
+										on : {
+											tap : () => {
+												Yogurt.Alert({
+													style : {
+														onDisplayResize : (width) => {
+															if (width < 800) {
+																return {
+																	width : 300
+																};
+															} else if (width < 1200) {
+																return {
+																	width : 600
+																};
+															} else {
+																return {
+																	width : 1000
+																};
+															}
+														}
+													},
+													contentStyle : {
+														padding : 0
+													},
+													msg : DIV({
+														style : {
+															height : 300,
+															overflowY : 'scroll',
+															fontSize : 14,
+															padding : 10,
+															lineHeight : '1.4em',
+															textAlign : 'left'
+														},
+														c : originMessage
+													})
+												});
+											}
+										}
+									}));
+								}
+								
+								return SPAN({
+									c : children
+								});
+							})
+						)]
 					}));
 					
 					if (iconMap[chatData.userId] === undefined) {

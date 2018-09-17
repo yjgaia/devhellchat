@@ -12,5 +12,12 @@ global.EMOTICONS = {
 	아님말고 : {isGIF : true},
 	대박 : {},
 	고블린 : {},
-	끼에에엑 : {isGIF : true}
+	끼에에엑 : {isGIF : true},
+	shia : {},
+	animalgo : {},
+	just : {},
+	do : {},
+	it : {},
+	not : {},
+	giveup : {}
 };
