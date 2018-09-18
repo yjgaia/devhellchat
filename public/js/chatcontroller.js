@@ -516,7 +516,7 @@ global.ChatController = OBJECT({
 											userId : user.uid,
 											name : user.displayName,
 											userIconURL : ConnectionController.getUserIconURL(),
-											targetName : args[0],
+											targetName : args[0].substring(0, 20),
 											isEliminated : true
 										});
 									}
