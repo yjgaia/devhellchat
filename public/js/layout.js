@@ -69,7 +69,7 @@ global.Layout = OBJECT({
 								span.empty();
 								span.append('devhellchat');
 							},
-							tap : () => {
+							touchend : () => {
 								GO('');
 								menuLayout.hideRightMenu();
 							}
@@ -80,7 +80,7 @@ global.Layout = OBJECT({
 							color : '#666',
 							fontSize : 18
 						},
-						c : '0.1'
+						c : '0.2'
 					})]
 				})
 			}),
