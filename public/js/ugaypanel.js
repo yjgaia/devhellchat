@@ -81,102 +81,128 @@ global.UGayPanel = CLASS({
 				}
 			}),
 			
-			// 입력폼
-			FORM({
+			DIV({
 				style : {
-					padding : '60px 40px 0'
+					onDisplayResize : (width, height) => {
+						if (width < 800) {
+							return {
+								padding : '0 20px'
+							};
+						} else {
+							return {
+								padding : '0 40px'
+							};
+						}
+					}
 				},
-				c : [Yogurt.Input({
-					name : 'title',
-					placeholder : '제목'
-				}), uploadPreview = DIV({
+				c : [
+				H1({
 					style : {
-						marginTop : 10
+						marginTop : 60,
+						textAlign : 'center'
 					},
-				}), uploadInput = INPUT({
-					type : 'file',
-					on : {
-						change : () => {
-							let file = uploadInput.getEl().files[0];
-							
-							if (file !== undefined) {
+					c : IMG({
+						src : '/resource/ugay.gif'
+					})
+				}),
+				
+				// 입력폼
+				FORM({
+					style : {
+						marginTop : 20
+					},
+					c : [Yogurt.Input({
+						name : 'title',
+						placeholder : '제목'
+					}), uploadPreview = DIV({
+						style : {
+							marginTop : 10
+						},
+					}), uploadInput = INPUT({
+						type : 'file',
+						on : {
+							change : () => {
+								let file = uploadInput.getEl().files[0];
 								
-								if (file.size !== undefined && file.size <= MAX_UPLOAD_FILE_SIZE) {
-									uploadFile(file);
-									uploadInput.setValue('');
-								}
-								
-								else {
-									alert('용량이 너무큼! 최대 용량 ' + INTEGER(MAX_UPLOAD_FILE_SIZE / 1024 / 1024) + 'MB 임');
-									uploadInput.setValue('');
+								if (file !== undefined) {
+									
+									if (file.size !== undefined && file.size <= MAX_UPLOAD_FILE_SIZE) {
+										uploadFile(file);
+										uploadInput.setValue('');
+									}
+									
+									else {
+										alert('용량이 너무큼! 최대 용량 ' + INTEGER(MAX_UPLOAD_FILE_SIZE / 1024 / 1024) + 'MB 임');
+										uploadInput.setValue('');
+									}
 								}
 							}
 						}
-					}
-				}), uploadProgress = DIV({
-					style : {
-						fontSize : 14,
-						color : '#666'
-					}
-				}), Yogurt.Textarea({
-					style : {
-						marginTop : 10
-					},
-					name : 'content',
-					placeholder : '내용'
-				}), Yogurt.Submit({
-					style : {
-						marginTop : 10
-					},
-					value : '작성 완료'
-				})],
-				on : {
-					submit : (e, form) => {
-						
-						let data = form.getData();
-						data.writerId = UserController.getSignedUserId();
-						data.uploadFileURL = nowUploadFileURL;
-						data.writeTime = firebase.database.ServerValue.TIMESTAMP;
-						
-						if (VALID.notEmpty(data.title) !== true) {
-							Yogurt.Alert({
-								msg : '제목은 필수입력임'
-							});
-						} else if (VALID.notEmpty(data.writerId) !== true) {
-							Yogurt.Alert({
-								msg : '유저 정보 로딩중임. 쪼까 있다가 다시 시도해주셈'
-							});
-						} else if (VALID.notEmpty(data.uploadFileURL) !== true) {
-							Yogurt.Alert({
-								msg : '짤을 올려야지'
-							});
+					}), uploadProgress = DIV({
+						style : {
+							fontSize : 14,
+							color : '#666'
 						}
-						
-						else {
+					}), Yogurt.Textarea({
+						style : {
+							marginTop : 10
+						},
+						name : 'content',
+						placeholder : '내용'
+					}), Yogurt.Submit({
+						style : {
+							marginTop : 10
+						},
+						value : '작성 완료'
+					})],
+					on : {
+						submit : (e, form) => {
 							
-							form.setData({});
-							uploadPreview.empty();
-							nowUploadFileURL = undefined;
+							let data = form.getData();
+							data.writerId = UserController.getSignedUserId();
+							data.uploadFileURL = nowUploadFileURL;
+							data.writeTime = firebase.database.ServerValue.TIMESTAMP;
 							
-							let ugayId = ugayRef.push(data).key;
+							if (VALID.notEmpty(data.title) !== true) {
+								Yogurt.Alert({
+									msg : '제목은 필수입력임'
+								});
+							} else if (VALID.notEmpty(data.writerId) !== true) {
+								Yogurt.Alert({
+									msg : '유저 정보 로딩중임. 쪼까 있다가 다시 시도해주셈'
+								});
+							} else if (VALID.notEmpty(data.uploadFileURL) !== true) {
+								Yogurt.Alert({
+									msg : '짤을 올려야지'
+								});
+							}
 							
-							chatsRef.push({
-								userId : UserController.getSignedUserId(),
-								name : UserController.getSignedUserData().displayName,
-								userIconURL : ConnectionController.getUserIconURL(),
-								isUGay : true,
-								title : data.title,
-								ugayId : ugayId
-							});
-							
-							UserController.increaseEXP(20);
+							else {
+								
+								form.setData({});
+								uploadPreview.empty();
+								nowUploadFileURL = undefined;
+								
+								let ugayId = ugayRef.push(data).key;
+								
+								chatsRef.push({
+									userId : UserController.getSignedUserId(),
+									name : UserController.getSignedUserData().displayName,
+									userIconURL : ConnectionController.getUserIconURL(),
+									isUGay : true,
+									title : data.title,
+									ugayId : ugayId
+								});
+								
+								UserController.increaseEXP(20);
+							}
 						}
 					}
-				}
-			}), list = DIV({
-				style : {
-					padding : '0 40px 60px'
-				}
+				}), list = DIV({
+					style : {
+						paddingBottom : 60
+					}
+				})]
 			})]
 		}).appendTo(Layout.getContent());
 		
