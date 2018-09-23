@@ -5,14 +5,32 @@ global.UserController = OBJECT({
 		// Firebase Ref들 가져오기
 		let usersRef = firebase.database().ref('users');
 		
+		let userDataCache = {};
+		
 		// 유저 정보 반환
 		let getUserData = self.getUserData = (userId, callback) => {
 			//REQUIRED: userId
 			//REQUIRED: callback
 			
-			usersRef.child(userId).once('value', (snapshot) => {
-				callback(snapshot.val() === TO_DELETE ? undefined : snapshot.val());
-			});
+			if (userDataCache[userId] !== undefined) {
+				callback(userDataCache[userId]);
+			}
+			
+			else {
+				
+				usersRef.child(userId).once('value', (snapshot) => {
+					let userData = snapshot.val() === TO_DELETE ? undefined : snapshot.val();
+					if (userData !== undefined) {
+						userDataCache[userId] = userData;
+					}
+					callback(userData);
+				});
+			}
+		};
+		
+		let signedUserData;
+		let getSignedUserData = self.getSignedUserData = () => {
+			return signedUserData;
 		};
 		
 		let signedUserId;
@@ -22,6 +40,7 @@ global.UserController = OBJECT({
 		
 		// 컨트롤러를 초기화합니다.
 		let init = self.init = (user) => {
+			signedUserData = user;
 			signedUserId = user.uid;
 			
 			let userRef = usersRef.child(user.uid);

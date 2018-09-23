@@ -21,7 +21,10 @@
 		},
 		"ugay": {
 			".read": "auth != null",
-			".write": "auth != null && (data.exists() !== true || data.child('writerId').val() === auth.uid)"
+			"$id": {
+				".read": "auth != null",
+				".write": "auth != null && (data.exists() !== true || data.child('writerId').val() === auth.uid)"
+			}
 		}
 	}
 }

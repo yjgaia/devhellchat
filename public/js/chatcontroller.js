@@ -612,6 +612,21 @@ global.ChatController = OBJECT({
 					}), chatData.newName]);
 				}
 				
+				// 새 유게짱
+				if (chatData.isUGay === true) {
+					addSystemMessage('새 유게짱!', A({
+						style : {
+							textDecoration : 'underline'
+						},
+						c : chatData.title + ', by ' + chatData.name,
+						on : {
+							tap : () => {
+								GO('u-gay');
+							}
+						}
+					}));
+				}
+				
 				// 새 메시지
 				else {
 					

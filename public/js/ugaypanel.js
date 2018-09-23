@@ -9,6 +9,7 @@ global.UGayPanel = CLASS({
 		const MAX_UPLOAD_FILE_SIZE = 20971520;
 		
 		// Firebase Ref들 가져오기
+		let chatsRef = firebase.database().ref('chats');
 		let ugayRef = firebase.database().ref('ugay');
 		let uploadsRef = firebase.storage().ref('uploads');
 		
@@ -149,15 +150,31 @@ global.UGayPanel = CLASS({
 							Yogurt.Alert({
 								msg : '짤을 올려야지'
 							});
-						} else {
+						}
+						
+						else {
+							
 							form.setData({});
-							ugayRef.push(data);
+							uploadPreview.empty();
+							nowUploadFileURL = undefined;
+							
+							let ugayId = ugayRef.push(data).key;
+							
+							chatsRef.push({
+								userId : UserController.getSignedUserId(),
+								name : UserController.getSignedUserData().displayName,
+								userIconURL : ConnectionController.getUserIconURL(),
+								isUGay : true,
+								title : data.title,
+								ugayId : ugayId
+							});
+							
+							UserController.increaseEXP(20);
 						}
 					}
 				}
 			}), list = DIV({
 				style : {
-					marginTop : 20,
 					padding : '0 40px 60px'
 				}
 			})]
@@ -175,18 +192,24 @@ global.UGayPanel = CLASS({
 			let ugayData = snapshot.val();
 			ugayData.key = snapshot.key;
 			
+			let item;
+			let titlePanel;
+			let contentPanel;
 			let writerInfoPanel;
-			list.append(DIV({
+			list.prepend(item = DIV({
+				style : {
+					marginTop : 20
+				},
 				c : [P({
 					style : {
-						padding : 10,
+						padding : '10px 0',
 						borderBottom : '1px solid #999'
 					},
-					c : [SPAN({
+					c : [titlePanel = SPAN({
 						style : {
 							flt : 'left'
 						},
-						c : ugayData.title
+						c : '제목 : ' + ugayData.title
 					}), writerInfoPanel = SPAN({
 						style : {
 							flt : 'right'
@@ -203,9 +226,9 @@ global.UGayPanel = CLASS({
 						},
 						src : ugayData.uploadFileURL
 					})
-				}), ugayData.content === undefined ? '' : P({
+				}), contentPanel = P({
 					style : {
-						padding : 10,
+						padding : '10px 0',
 						borderTop : '1px solid #999'
 					},
 					c : ugayData.content
@@ -249,7 +272,79 @@ global.UGayPanel = CLASS({
 					});
 					
 					if (ugayData.writerId === UserController.getSignedUserId()) {
-						// 작성자 기능 구현해야함
+						
+						titlePanel.after(A({
+							style : {
+								marginLeft : 10,
+								color : '#666',
+								fontSize : 14
+							},
+							c : '[제목 수정]',
+							on : {
+								tap : () => {
+									
+									Yogurt.Prompt({
+										msg : '제목 입력하셈',
+										value : ugayData.title
+									}, (title) => {
+										
+										titlePanel.empty();
+										titlePanel.append('제목 : ' + title);
+										
+										ugayData.title = title;
+										ugayRef.child(ugayData.key).set(ugayData);
+									});
+								}
+							}
+						}));
+						
+						contentPanel.after(A({
+							style : {
+								color : '#666',
+								fontSize : 14
+							},
+							c : '[내용 수정]',
+							on : {
+								tap : () => {
+									
+									Yogurt.Prompt({
+										msg : '내용 입력하셈',
+										value : ugayData.content
+									}, (content) => {
+										
+										contentPanel.empty();
+										contentPanel.append(content);
+										
+										ugayData.content = content;
+										ugayRef.child(ugayData.key).set(ugayData);
+									});
+								}
+							}
+						}));
+						
+						item.append(DIV({
+							style : {
+								spadding : '10px 0',
+								borderTop : '1px solid #999',
+								color : '#666',
+								fontSize : 14,
+								textAlign : 'right'
+							},
+							c : A({
+								c : '[글 삭제]',
+								on : {
+									tap : () => {
+										
+										Yogurt.Confirm({
+											msg : '진짜 삭제함?'
+										}, () => {
+											item.remove();
+											ugayRef.child(ugayData.key).remove();
+										});
+									}
+								}
+							})
+						}));
 					}
 				}
 			});
