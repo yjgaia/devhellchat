@@ -35,7 +35,8 @@ RUN(() => {
 						},
 						icon : FontAwesome.GetIcon({
 							style : {
-								fontSize : 20
+								fontSize : 20,
+								width : 18
 							},
 							key : 'arrow-left'
 						}),
@@ -70,6 +71,11 @@ RUN(() => {
 	MATCH_VIEW({
 		uri : 'user/{userId}',
 		target : UserPanel
+	});
+	
+	MATCH_VIEW({
+		uri : 'u-gay',
+		target : UGayPanel
 	});
 	
 	// 로그인 처리

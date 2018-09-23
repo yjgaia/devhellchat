@@ -16,9 +16,7 @@ global.UserPanel = CLASS({
 			
 			wrapper = DIV({
 				style : {
-					fontSize : 16,
-					height : '100%',
-					overflowY : 'scroll'
+					fontSize : 16
 				},
 				c : [
 				// 뒤로가기
@@ -30,7 +28,8 @@ global.UserPanel = CLASS({
 					},
 					icon : FontAwesome.GetIcon({
 						style : {
-							fontSize : 20
+							fontSize : 20,
+							width : 18
 						},
 						key : 'arrow-left'
 					}),

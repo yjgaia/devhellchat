@@ -18,6 +18,10 @@
 				".read": "auth != null",
 				".write": "$id === auth.uid"
 			}
+		},
+		"ugay": {
+			".read": "auth != null",
+			".write": "auth != null && (data.exists() !== true || data.child('writerId').val() === auth.uid)"
 		}
 	}
 }

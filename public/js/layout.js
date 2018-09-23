@@ -105,6 +105,7 @@ global.Layout = OBJECT({
 					position : 'relative',
 					backgroundColor : '#fff',
 					color : '#000',
+					overflowY : 'auto',
 					onDisplayResize : (width, height) => {
 						return {
 							height : height - 48
@@ -160,7 +161,13 @@ global.Layout = OBJECT({
 					borderBottom : '1px solid #666',
 					padding : 10
 				},
-				c : '유게짱 (개발중)'
+				c : '유게짱',
+				on : {
+					tap : () => {
+						GO('u-gay');
+						menuLayout.hideRightMenu();
+					}
+				}
 			}));
 			
 			menu.append(A({
