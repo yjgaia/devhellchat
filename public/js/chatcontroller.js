@@ -526,7 +526,7 @@ global.ChatController = OBJECT({
 								
 								else if (command === '레벨') {
 									UserController.getUserData(user.uid, (userData) => {
-										addSystemMessage('님 레벨', 'Lv. ' + userData.level);
+										addSystemMessage(user.displayName + '님 레벨', 'Lv. ' + userData.level);
 									});
 								}
 								
