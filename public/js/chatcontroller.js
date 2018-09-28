@@ -3,12 +3,12 @@ global.ChatController = OBJECT({
 	init : (inner, self) => {
 		
 		const URL_REGEX = /(http|https|ftp|telnet|news|mms):\/[^\"\'\s()]+/i;
-		const MAX_UPLOAD_FILE_SIZE = 20971520;
+		const MAX_UPLOAD_FILE_SIZE = 5242880;
 		
 		// Firebase Ref들 가져오기
 		let chatsRef = firebase.database().ref('chats');
 		let iconsRef = firebase.storage().ref('icons');
-		let uploadsRef = firebase.storage().ref('uploads');
+		let uploadsRef = firebase.storage().ref('chat-uploads');
 		
 		// 스킨 설정
 		let chatStore = STORE('DevHellChat');
@@ -334,7 +334,9 @@ global.ChatController = OBJECT({
 														description.empty();
 														description.append('업로드 중...');
 														
-														iconsRef.child(user.uid).put(file).then((snapshot) => {
+														iconsRef.child(user.uid).put(file, {
+															cacheControl : 'public,max-age=31536000'
+														}).then((snapshot) => {
 															iconsRef.child(user.uid).getDownloadURL().then((url) => {
 																
 																iconPreview.setSrc(url);
@@ -522,12 +524,18 @@ global.ChatController = OBJECT({
 									}
 								}
 								
+								else if (command === '레벨') {
+									UserController.getUserData(user.uid, (userData) => {
+										addSystemMessage('님 레벨', 'Lv. ' + userData.level);
+									});
+								}
+								
 								else if (command === '로그아웃') {
 									firebase.auth().signOut();
 								}
 								
 								else {
-									addSystemMessage('명령어', '/명령어, /닉네임, /접속자, /스킨, /이모티콘, /처치, /로그아웃');
+									addSystemMessage('명령어', '/명령어, /닉네임, /접속자, /스킨, /이모티콘, /처치, /레벨, /로그아웃');
 								}
 							}
 							
@@ -557,7 +565,9 @@ global.ChatController = OBJECT({
 				
 				let fileId = UUID();
 				
-				let uploadTask = uploadsRef.child(fileId).child(file.name).put(file);
+				let uploadTask = uploadsRef.child(fileId).child(file.name).put(file, {
+					cacheControl : 'public,max-age=31536000'
+				});
 				
 				uploadTask.on('state_changed', (snapshot) => {
 					uploadButton.empty();
@@ -1047,6 +1057,11 @@ global.ChatController = OBJECT({
 				
 				// 오래된 메시지 삭제
 				if (chatDataSet.length > 100) {
+					
+					if (chatDataSet[0].fileId !== undefined) {
+						uploadsRef.child(chatDataSet[0].fileId).delete();
+					}
+					
 					chatsRef.child(chatDataSet[0].key).remove();
 					chatDataSet.shift();
 				}

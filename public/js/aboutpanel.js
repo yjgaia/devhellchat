@@ -31,6 +31,62 @@ global.AboutPanel = CLASS({
 				c : '단, 여기서 싸우거나 다른 사람한테 시비걸거나 비꼬거나 하면 즉각 처단함.\n이상한 놈이 있으면 싸우지말고 그냥 무시하셈'
 			}), DIV({
 				style : {
+					marginTop : 20,
+					maxWidth : 200
+				},
+				c : [H2({
+					c : '활동 별 경험치 테이블'
+				}), TABLE({
+					style : {
+						marginTop : 10,
+						border : '1px solid #666'
+					},
+					c : [TR({
+						c : [TH({
+							style : {
+								padding : 5,
+								border : '1px solid #666'
+							},
+							c : '활동'
+						}), TH({
+							style : {
+								padding : 5,
+								border : '1px solid #666'
+							},
+							c : '경험치'
+						})]
+					}), TR({
+						c : [TD({
+							style : {
+								padding : 5,
+								border : '1px solid #666'
+							},
+							c : '채팅'
+						}), TD({
+							style : {
+								padding : 5,
+								border : '1px solid #666'
+							},
+							c : '10'
+						})]
+					}), TR({
+						c : [TD({
+							style : {
+								padding : 5,
+								border : '1px solid #666'
+							},
+							c : '유게짱'
+						}), TD({
+							style : {
+								padding : 5,
+								border : '1px solid #666'
+							},
+							c : '100'
+						})]
+					})]
+				})]
+			}), DIV({
+				style : {
 					marginTop : 20
 				},
 				c : A({

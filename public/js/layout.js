@@ -128,6 +128,21 @@ global.Layout = OBJECT({
 					borderBottom : '1px solid #666',
 					padding : 10
 				},
+				c : '채팅으로',
+				on : {
+					tap : () => {
+						GO('');
+						menuLayout.hideRightMenu();
+					}
+				}
+			}));
+			
+			menu.append(A({
+				style : {
+					display : 'block',
+					borderBottom : '1px solid #666',
+					padding : 10
+				},
 				c : '채팅방 소개',
 				on : {
 					tap : () => {
@@ -201,23 +216,35 @@ global.Layout = OBJECT({
 			EACH(users, (user) => {
 				
 				let icon;
+				let levelIconPanel;
 				recentlyUserList.append(A({
 					style : {
 						display : 'block',
 						borderBottom : '1px solid #666',
 						padding : 10
 					},
-					c : [icon = IMG({
+					c : [DIV({
 						style : {
-							marginRight : 8,
-							backgroundColor : '#fff',
-							marginBottom : -5,
-							width : 20,
-							height : 20,
-							borderRadius : 5
+							flt : 'left'
 						},
-						src : LoadIcon.getUserIconURL(user.userId) === undefined ? user.userIconURL : LoadIcon.getUserIconURL(user.userId)
-					}), user.name],
+						c : [icon = IMG({
+							style : {
+								marginRight : 8,
+								backgroundColor : '#fff',
+								marginBottom : -5,
+								width : 20,
+								height : 20,
+								borderRadius : 5
+							},
+							src : LoadIcon.getUserIconURL(user.userId) === undefined ? user.userIconURL : LoadIcon.getUserIconURL(user.userId)
+						}), user.name]
+					}), levelIconPanel = DIV({
+						style : {
+							marginTop : 2,
+							flt : 'right',
+							height : 16
+						}
+					}), CLEAR_BOTH()],
 					on : {
 						tap : (e) => {
 							e.stop();
@@ -283,6 +310,12 @@ global.Layout = OBJECT({
 				
 				LoadIcon(user.userId, (url) => {
 					icon.setSrc(url);
+				});
+				
+				UserController.getUserData(user.userId, (userData) => {
+					levelIconPanel.append(IMG({
+						src : '/resource/level/' + userData.level + '.gif'
+					}));
 				});
 			});
 		};

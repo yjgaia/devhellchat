@@ -79,7 +79,7 @@ global.UserPanel = CLASS({
 						style : {
 							padding : '60px 40px'
 						},
-						c : [DIV({
+						c : [iconWrapper = DIV({
 							style : {
 								flt : 'left',
 								width : 40,
@@ -107,7 +107,13 @@ global.UserPanel = CLASS({
 							style : {
 								marginTop : 20
 							},
-							c : ['Lv. ' + userData.level, SPAN({
+							c : [SPAN({
+								style : {
+									color : '#3300FF',
+									fontWeight : 'bold'
+								},
+								c : 'Lv. ' + userData.level
+							}), SPAN({
 								style : {
 									marginLeft : 8,
 									color : '#999',

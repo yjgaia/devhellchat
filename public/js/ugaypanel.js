@@ -6,13 +6,14 @@ global.UGayPanel = CLASS({
 	
 	init : (inner, self) => {
 		
-		const MAX_UPLOAD_FILE_SIZE = 20971520;
+		const MAX_UPLOAD_FILE_SIZE = 5242880;
 		
 		// Firebase Ref들 가져오기
 		let chatsRef = firebase.database().ref('chats');
 		let ugayRef = firebase.database().ref('ugay');
-		let uploadsRef = firebase.storage().ref('uploads');
+		let uploadsRef = firebase.storage().ref('ugay-uploads');
 		
+		let nowUploadFileId;
 		let nowUploadFileURL;
 		
 		// 파일 업로드 처리
@@ -20,7 +21,9 @@ global.UGayPanel = CLASS({
 			
 			let fileId = UUID();
 			
-			let uploadTask = uploadsRef.child(fileId).child(file.name).put(file);
+			let uploadTask = uploadsRef.child(fileId).child(file.name).put(file, {
+				cacheControl : 'public,max-age=31536000'
+			});
 			
 			uploadTask.on('state_changed', (snapshot) => {
 				uploadProgress.empty();
@@ -31,6 +34,7 @@ global.UGayPanel = CLASS({
 				uploadProgress.empty();
 				
 				uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+					nowUploadFileId = fileId;
 					nowUploadFileURL = downloadURL;
 					
 					uploadPreview.empty();
@@ -160,6 +164,7 @@ global.UGayPanel = CLASS({
 							
 							let data = form.getData();
 							data.writerId = UserController.getSignedUserId();
+							data.uploadFileId = nowUploadFileId;
 							data.uploadFileURL = nowUploadFileURL;
 							data.writeTime = firebase.database.ServerValue.TIMESTAMP;
 							
@@ -194,7 +199,7 @@ global.UGayPanel = CLASS({
 									ugayId : ugayId
 								});
 								
-								UserController.increaseEXP(20);
+								UserController.increaseEXP(100);
 							}
 						}
 					}
@@ -211,8 +216,10 @@ global.UGayPanel = CLASS({
 			src : '/resource/loading.svg'
 		}).appendTo(list);
 		
+		let ugayDataSet = [];
+		
 		// 새 유게짱이 추가되면
-		ugayRef.orderByKey().limitToLast(100).on('child_added', (snapshot) => {
+		ugayRef.on('child_added', (snapshot) => {
 			loading.remove();
 			
 			let ugayData = snapshot.val();
@@ -374,6 +381,17 @@ global.UGayPanel = CLASS({
 					}
 				}
 			});
+			
+			// 오래된 유게이 삭제
+			if (ugayDataSet.length > 100) {
+				
+				if (ugayDataSet[0].uploadFileId !== undefined) {
+					uploadsRef.child(ugayDataSet[0].uploadFileId).delete();
+				}
+				
+				ugayRef.child(ugayDataSet[0].key).remove();
+				ugayDataSet.shift();
+			}
 		});
 		
 		inner.on('close', () => {
