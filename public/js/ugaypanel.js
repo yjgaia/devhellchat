@@ -13,9 +13,9 @@ global.UGayPanel = CLASS({
 		let ugayRef = firebase.database().ref('ugay');
 		let ugayUploadsRef = firebase.storage().ref('uploads');
 		
-		let nowUploadFileServer;
-		let nowUploadFileId;
-		let nowUploadFileURL;
+		let nowUploadFileServers = [];
+		let nowUploadFileIds = [];
+		let nowUploadFileURLs = [];
 		
 		// 파일 업로드 처리
 		let uploadFile = (file) => {
@@ -35,16 +35,17 @@ global.UGayPanel = CLASS({
 				uploadProgress.empty();
 				
 				uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-					nowUploadFileServer = 'ugayUploadApp';
-					nowUploadFileId = fileId;
-					nowUploadFileURL = downloadURL;
 					
-					uploadPreview.empty();
+					nowUploadFileServers.push('ugayUploadApp');
+					nowUploadFileIds.push(fileId);
+					nowUploadFileURLs.push(downloadURL);
+					
 					uploadPreview.append(IMG({
 						style : {
+							display : 'block',
 							maxHeight : 100
 						},
-						src : nowUploadFileURL
+						src : downloadURL
 					}));
 				});
 			});
@@ -166,9 +167,9 @@ global.UGayPanel = CLASS({
 							
 							let data = form.getData();
 							data.writerId = UserController.getSignedUserId();
-							data.uploadFileServer = nowUploadFileServer;
-							data.uploadFileId = nowUploadFileId;
-							data.uploadFileURL = nowUploadFileURL;
+							data.uploadFileServers = nowUploadFileServers;
+							data.uploadFileIds = nowUploadFileIds;
+							data.uploadFileURLs = nowUploadFileURLs;
 							data.writeTime = firebase.database.ServerValue.TIMESTAMP;
 							
 							if (VALID.notEmpty(data.title) !== true) {
@@ -179,7 +180,7 @@ global.UGayPanel = CLASS({
 								Yogurt.Alert({
 									msg : '유저 정보 로딩중임. 쪼까 있다가 다시 시도해주셈'
 								});
-							} else if (VALID.notEmpty(data.uploadFileURL) !== true) {
+							} else if (data.uploadFileURLs === undefined || data.uploadFileURLs.length === 0) {
 								Yogurt.Alert({
 									msg : '짤을 올려야지'
 								});
@@ -189,7 +190,9 @@ global.UGayPanel = CLASS({
 								
 								form.setData({});
 								uploadPreview.empty();
-								nowUploadFileURL = undefined;
+								nowUploadFileServers = [];
+								nowUploadFileIds = [];
+								nowUploadFileURLs = [];
 								
 								let ugayId = ugayRef.push(data).key;
 								
@@ -256,11 +259,17 @@ global.UGayPanel = CLASS({
 					style : {
 						padding : '10px 0'
 					},
-					c : IMG({
-						style : {
-							maxWidth : '100%'
-						},
-						src : ugayData.uploadFileURL
+					c : RUN(() => {
+						let imgs = [];
+						EACH(ugayData.uploadFileURLs, (uploadFileURL) => {
+							imgs.push(IMG({
+								style : {
+									maxWidth : '100%'
+								},
+								src : uploadFileURL
+							}));
+						})
+						return imgs;
 					})
 				}), contentPanel = P({
 					style : {
