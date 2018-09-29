@@ -3,12 +3,12 @@ global.ChatController = OBJECT({
 	init : (inner, self) => {
 		
 		const URL_REGEX = /(http|https|ftp|telnet|news|mms):\/[^\"\'\s()]+/i;
-		const MAX_UPLOAD_FILE_SIZE = 5242880;
+		const MAX_UPLOAD_FILE_SIZE = 26214400;
 		
 		// Firebase Ref들 가져오기
 		let chatsRef = firebase.database().ref('chats');
 		let iconsRef = firebase.storage().ref('icons');
-		let uploadsRef = firebase.storage().ref('chat-uploads');
+		let chatUploadsRef = chatUploadApp.storage().ref('uploads');
 		
 		// 스킨 설정
 		let chatStore = STORE('DevHellChat');
@@ -565,7 +565,7 @@ global.ChatController = OBJECT({
 				
 				let fileId = UUID();
 				
-				let uploadTask = uploadsRef.child(fileId).child(file.name).put(file, {
+				let uploadTask = chatUploadsRef.child(fileId).child(file.name).put(file, {
 					cacheControl : 'public,max-age=31536000'
 				});
 				
@@ -590,6 +590,7 @@ global.ChatController = OBJECT({
 							userId : user.uid,
 							name : user.displayName,
 							userIconURL : ConnectionController.getUserIconURL(),
+							uploadServer : 'chatUploadApp',
 							fileId : fileId,
 							fileName : file.name,
 							downloadURL : downloadURL,
@@ -1059,7 +1060,7 @@ global.ChatController = OBJECT({
 				if (chatDataSet.length > 100) {
 					
 					if (chatDataSet[0].fileId !== undefined) {
-						uploadsRef.child(chatDataSet[0].fileId).delete();
+						chatUploadsRef.child(chatDataSet[0].fileId).delete();
 					}
 					
 					chatsRef.child(chatDataSet[0].key).remove();

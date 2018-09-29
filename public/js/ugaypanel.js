@@ -6,13 +6,14 @@ global.UGayPanel = CLASS({
 	
 	init : (inner, self) => {
 		
-		const MAX_UPLOAD_FILE_SIZE = 5242880;
+		const MAX_UPLOAD_FILE_SIZE = 26214400;
 		
 		// Firebase Ref들 가져오기
 		let chatsRef = firebase.database().ref('chats');
 		let ugayRef = firebase.database().ref('ugay');
-		let uploadsRef = firebase.storage().ref('ugay-uploads');
+		let ugayUploadsRef = firebase.storage().ref('uploads');
 		
+		let nowUploadFileServer;
 		let nowUploadFileId;
 		let nowUploadFileURL;
 		
@@ -21,7 +22,7 @@ global.UGayPanel = CLASS({
 			
 			let fileId = UUID();
 			
-			let uploadTask = uploadsRef.child(fileId).child(file.name).put(file, {
+			let uploadTask = ugayUploadsRef.child(fileId).child(file.name).put(file, {
 				cacheControl : 'public,max-age=31536000'
 			});
 			
@@ -34,6 +35,7 @@ global.UGayPanel = CLASS({
 				uploadProgress.empty();
 				
 				uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+					nowUploadFileServer = 'ugayUploadApp';
 					nowUploadFileId = fileId;
 					nowUploadFileURL = downloadURL;
 					
@@ -164,6 +166,7 @@ global.UGayPanel = CLASS({
 							
 							let data = form.getData();
 							data.writerId = UserController.getSignedUserId();
+							data.uploadFileServer = nowUploadFileServer;
 							data.uploadFileId = nowUploadFileId;
 							data.uploadFileURL = nowUploadFileURL;
 							data.writeTime = firebase.database.ServerValue.TIMESTAMP;
@@ -386,7 +389,7 @@ global.UGayPanel = CLASS({
 			if (ugayDataSet.length > 100) {
 				
 				if (ugayDataSet[0].uploadFileId !== undefined) {
-					uploadsRef.child(ugayDataSet[0].uploadFileId).delete();
+					ugayUploadsRef.child(ugayDataSet[0].uploadFileId).delete();
 				}
 				
 				ugayRef.child(ugayDataSet[0].key).remove();
