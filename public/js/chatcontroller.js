@@ -166,6 +166,11 @@ global.ChatController = OBJECT({
 				addSystemMessage('접속자 ' + ConnectionController.getRecentlyUsers().length + '명', names);
 			};
 			
+			// 공지사항 출력
+			let showNotice = self.showNotice = () => {
+				addSystemMessage('공지', '한국 도메인 1년 무료 이벤트 하길래 http://헬쳇.한국 만들었음. 1년간 접속가능여');
+			};
+			
 			// 화면 크기가 바뀌면 스크롤 맨 아래로
 			EVENT('resize', () => {
 				DELAY(() => {

@@ -88,6 +88,7 @@ global.ConnectionController = OBJECT({
 				if (isFirstShowingRecentlyUsers === true) {
 					isFirstShowingRecentlyUsers = false;
 					ChatController.showRecentlyUsers();
+					ChatController.showNotice();
 				}
 			});
 		};

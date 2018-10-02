@@ -264,6 +264,7 @@ global.UGayPanel = CLASS({
 						EACH(ugayData.uploadFileURLs, (uploadFileURL) => {
 							imgs.push(IMG({
 								style : {
+									display : 'block',
 									maxWidth : '100%'
 								},
 								src : uploadFileURL
