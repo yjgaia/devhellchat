@@ -11,7 +11,7 @@ global.UGayPanel = CLASS({
 		// Firebase Ref들 가져오기
 		let chatsRef = firebase.database().ref('chats');
 		let ugayRef = firebase.database().ref('ugay');
-		let ugayUploadsRef = firebase.storage().ref('uploads');
+		let ugayUploadsRef = ugayUploadApp.storage().ref('uploads');
 		
 		let nowUploadFileServers = [];
 		let nowUploadFileIds = [];
@@ -396,7 +396,7 @@ global.UGayPanel = CLASS({
 			});
 			
 			// 오래된 유게이 삭제
-			if (ugayDataSet.length > 100) {
+			if (ugayDataSet.length > 10) {
 				
 				if (ugayDataSet[0].uploadFileId !== undefined) {
 					ugayUploadsRef.child(ugayDataSet[0].uploadFileId).delete();
