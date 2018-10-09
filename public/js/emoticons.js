@@ -19,5 +19,6 @@ global.EMOTICONS = {
 	do : {},
 	it : {},
 	not : {},
-	giveup : {}
+	giveup : {},
+	두둥탁 : {isGIF : true}
 };
