@@ -231,6 +231,8 @@ global.UGayPanel = CLASS({
 			let ugayData = snapshot.val();
 			ugayData.key = snapshot.key;
 			
+			ugayDataSet.push(ugayData);
+			
 			let item;
 			let titlePanel;
 			let contentPanel;
