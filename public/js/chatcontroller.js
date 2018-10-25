@@ -539,8 +539,21 @@ global.ChatController = OBJECT({
 									firebase.auth().signOut();
 								}
 								
+								else if (command === '참피온') {
+									chatStore.remove('champioff');
+									addSystemMessage('참피온', '이제 참피 관련 단어 보임');
+								}
+								
+								else if (command === '참피오프') {
+									chatStore.save({
+										name : 'champioff',
+										value : true
+									});
+									addSystemMessage('참피오프', '이제 참피 관련 단어 숨겨짐');
+								}
+								
 								else {
-									addSystemMessage('명령어', '/명령어, /닉네임, /접속자, /스킨, /이모티콘, /처치, /레벨, /로그아웃');
+									addSystemMessage('명령어', '/명령어, /닉네임, /접속자, /스킨, /이모티콘, /처치, /레벨, /로그아웃, /참피온, /참피오프');
 								}
 							}
 							
@@ -857,8 +870,14 @@ global.ChatController = OBJECT({
 							// 일반 메시지인 경우
 							RUN(() => {
 								
-								let originMessage = chatData.message;
-								let message = originMessage;
+								let message = chatData.message;
+								
+								// 참피 필터링
+								if (chatStore.get('champioff') === true) {
+									message = UTIL.champiFilter(message);
+								}
+								
+								let originMessage = message;
 								
 								if (message.length > 200) {
 									message = message.substring(0, 200);
