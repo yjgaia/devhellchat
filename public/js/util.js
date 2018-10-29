@@ -32,7 +32,7 @@ global.UTIL = {
 			'와 *타 *시',
 			'(레|래|렛|랫) *삐',
 		].forEach((v) => {
-			str = str.replace((new RegExp(v, 'g')), '*');
+			str = str.replace((new RegExp(v, 'g')), '.');
 		});
 		return str;
 	}
