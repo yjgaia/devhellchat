@@ -21,5 +21,5 @@ global.EMOTICONS = {
 	not : {},
 	giveup : {},
 	두둥탁 : {isGIF : true},
-	그런비밀이 : {isGIF : true}
+	그런비밀이 : {isGIF : true, isNoCaching : true}
 };
