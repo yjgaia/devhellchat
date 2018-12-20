@@ -795,7 +795,7 @@ global.ChatController = OBJECT({
 												left : e.getLeft() + 10,
 												top : e.getTop() - 42 - 8,
 												width : 90,
-												height : 60,
+												height : 90,
 												backgroundColor : '#fff',
 												backgroundImage : chatData.downloadURL,
 												backgroundSize : 'cover',
