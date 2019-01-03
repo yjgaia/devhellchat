@@ -184,7 +184,8 @@ global.ChatController = OBJECT({
 					userId : user.uid,
 					name : user.displayName,
 					userIconURL : ConnectionController.getUserIconURL(),
-					message : message
+					message : message,
+					createTime : Date.now()
 				});
 				
 				UserController.increaseEXP(10);
@@ -529,6 +530,23 @@ global.ChatController = OBJECT({
 									}
 								}
 								
+								else if (command === '겜스버그') {
+									
+									if (args.length === 0) {
+										addSystemMessage('사용법', '/겜스버그 [내용]');
+									}
+									
+									else {
+										chatsRef.push({
+											userId : user.uid,
+											name : user.displayName,
+											userIconURL : ConnectionController.getUserIconURL(),
+											message : message.substring(5),
+											isGamsberg : true
+										});
+									}
+								}
+								
 								else if (command === '레벨') {
 									UserController.getUserData(user.uid, (userData) => {
 										addSystemMessage(user.displayName + '님 레벨', 'Lv. ' + userData.level);
@@ -553,7 +571,7 @@ global.ChatController = OBJECT({
 								}
 								
 								else {
-									addSystemMessage('명령어', '/명령어, /닉네임, /접속자, /스킨, /이모티콘, /처치, /레벨, /로그아웃, /참피온, /참피오프');
+									addSystemMessage('명령어', '/명령어, /닉네임, /접속자, /스킨, /이모티콘, /처치, /겜스버그, /레벨, /로그아웃, /참피온, /참피오프');
 								}
 							}
 							
@@ -660,7 +678,8 @@ global.ChatController = OBJECT({
 				else {
 					
 					let icon;
-					messageList.append(DIV({
+					let message;
+					messageList.append(message = DIV({
 						style : {
 							onDisplayResize : (width, height) => {
 								// 모바일
@@ -867,199 +886,259 @@ global.ChatController = OBJECT({
 							
 							:
 							
-							// 일반 메시지인 경우
-							RUN(() => {
+							(
+								chatData.isGamsberg === true ?
 								
-								let message = chatData.message;
-								
-								// 참피 필터링
-								if (chatStore.get('champioff') === true) {
-									message = UTIL.champiFilter(message);
-								}
-								
-								let originMessage = message;
-								
-								if (message.length > 200) {
-									message = message.substring(0, 200);
-								}
-								
-								// 호출 기능
-								if (chatData.isCalled !== true && chatData.name !== user.displayName && (message + ' ').indexOf('@' + user.displayName + ' ') !== -1) {
-									
-									// 아이폰은 지원 안함
-									if (global.Notification === undefined || Notification.permission !== 'granted') {
-										DELAY(() => {
-											chatsRef.push({
-												userId : user.uid,
-												name : user.displayName,
-												userIconURL : ConnectionController.getUserIconURL(),
-												message : '(호출 기능이 차단된 유저입니다)'
-											});
-										});
-									}
-									
-									else if (document.hasFocus() !== true) {
-										new Notification(chatData.name, {
-											body : message,
-										}).onclick = () => {
-											focus();
-										};
-									}
-									
-									let updates = {};
-									chatData.isCalled = true;
-									updates[snapshot.key] = chatData;
-									chatsRef.update(updates);
-								}
-								
-								let children = [];
-								
-								EACH(message.split(' '), (message, i) => {
-									
-									if (i > 0) {
-										children.push(' ');
-									}
-									
-									// 이모티콘을 찾아 교체합니다.
-									let replaceEmoticon = (message) => {
-										
-										let match = message.match(/:[^:]*:/);
-										if (match === TO_DELETE) {
-											children.push(message);
-										}
-										
-										else {
+								// 겜스버그인 경우
+								A({
+									style : {
+										fontWeight : 'bold',
+										textDecoration : 'underline'
+									},
+									c : '오류 발생!',
+									on : {
+										tap : () => {
 											
-											let emoticonStr = match[0];
-											let emoticon = emoticonStr.substring(1, emoticonStr.length - 1).toLowerCase();
-											
-											if (EMOTICONS[emoticon] !== undefined) {
-												
-												let index = message.indexOf(emoticonStr);
-												
-												children.push(message.substring(0, index));
-												
-												children.push(IMG({
+											let popup = DIV({
+												style : {
+													position : 'fixed',
+													zIndex : 999999,
+													width : 483 / 2,
+													height : 895 / 2,
+													backgroundImage : '/resource/gamsberg.png',
+													backgroundSize : 'cover',
+													onDisplayResize : (width, height) => {
+														return {
+															left : width / 2 - 483 / 4,
+															top : height / 2 - 895 / 4
+														};
+													}
+												},
+												c : [P({
 													style : {
-														marginBottom : -4
+														position : 'absolute',
+														left : 15,
+														top : 132,
+														width : 215,
+														fontSize : 12,
+														lineHeight : '1.25em'
 													},
-													src : '/resource/emoticon/' + emoticon + (EMOTICONS[emoticon].isGIF === true ? '.gif' : '.png') + (EMOTICONS[emoticon].isNoCaching === true ? '?' + Date.now() : ''),
+													c : chatData.message
+												}), A({
+													style : {
+														position : 'absolute',
+														left : 62,
+														bottom : 8,
+														width : 116,
+														height : 27
+													},
 													on : {
-														load : () => {
-															// 로딩이 다 되면 스크롤 끝으로
-															if (isToScrollBottom === true || chatData.userId === user.uid) {
-																scrollToEnd();
-															}
-														},
-														doubletap : (e) => {
-															
-															messageInput.setValue(messageInput.getValue() + ':' + emoticon + ':');
-															messageInput.focus();
-															
-															e.stopDefault();
+														tap : () => {
+															popup.remove();
 														}
 													}
-												}));
-												
-												message = replaceEmoticon(message.substring(index + emoticonStr.length));
+												})]
+											}).appendTo(BODY);
+										}
+									}
+								})
+								
+								:
+								
+								// 일반 메시지인 경우
+								RUN(() => {
+									
+									let message = chatData.message;
+									
+									// 참피 필터링
+									if (chatStore.get('champioff') === true) {
+										message = UTIL.champiFilter(message);
+									}
+									
+									let originMessage = message;
+									
+									if (message.length > 200) {
+										message = message.substring(0, 200);
+									}
+									
+									// 호출 기능
+									if (chatData.isCalled !== true && chatData.name !== user.displayName && (message + ' ').indexOf('@' + user.displayName + ' ') !== -1) {
+										
+										// 아이폰은 지원 안함
+										if (global.Notification === undefined || Notification.permission !== 'granted') {
+											DELAY(() => {
+												chatsRef.push({
+													userId : user.uid,
+													name : user.displayName,
+													userIconURL : ConnectionController.getUserIconURL(),
+													message : '(호출 기능이 차단된 유저입니다)'
+												});
+											});
+										}
+										
+										else if (document.hasFocus() !== true) {
+											new Notification(chatData.name, {
+												body : message,
+											}).onclick = () => {
+												focus();
+											};
+										}
+										
+										let updates = {};
+										chatData.isCalled = true;
+										updates[snapshot.key] = chatData;
+										chatsRef.update(updates);
+									}
+									
+									let children = [];
+									
+									EACH(message.split(' '), (message, i) => {
+										
+										if (i > 0) {
+											children.push(' ');
+										}
+										
+										// 이모티콘을 찾아 교체합니다.
+										let replaceEmoticon = (message) => {
+											
+											let match = message.match(/:[^:]*:/);
+											if (match === TO_DELETE) {
+												children.push(message);
 											}
 											
 											else {
-												children.push(message);
-											}
-										}
-										
-										return message;
-									};
-									
-									// 링크를 찾아 교체합니다.
-									let replaceLink = () => {
-										
-										let match = message.match(URL_REGEX);
-										if (match === TO_DELETE) {
-											message = replaceEmoticon(message);
-										}
-										
-										else {
-											
-											let url = match[0];
-											if (url.indexOf(' ') !== -1) {
-												url = url.substring(0, url.indexOf(' '));
-											}
-											
-											let index = message.indexOf(url);
-											
-											message = replaceEmoticon(message.substring(0, index));
-											message = message.substring(index + url.length);
-											
-											children.push(A({
-												style : {
-													textDecoration : 'underline'
-												},
-												target : '_blank',
-												href : url,
-												c : url
-											}));
-											
-											replaceLink();
-										}
-									};
-									
-									replaceLink();
-								});
-								
-								// 너무 긴 메시지면 더보기 추가
-								if (message !== originMessage) {
-									children.push(' ...');
-									children.push(A({
-										style : {
-											textDecoration : 'underline'
-										},
-										c : '[더보기]',
-										on : {
-											tap : () => {
-												Yogurt.Alert({
-													style : {
-														onDisplayResize : (width) => {
-															if (width < 800) {
-																return {
-																	width : 300
-																};
-															} else if (width < 1200) {
-																return {
-																	width : 600
-																};
-															} else {
-																return {
-																	width : 1000
-																};
+												
+												let emoticonStr = match[0];
+												let emoticon = emoticonStr.substring(1, emoticonStr.length - 1).toLowerCase();
+												
+												if (EMOTICONS[emoticon] !== undefined) {
+													
+													let index = message.indexOf(emoticonStr);
+													
+													children.push(message.substring(0, index));
+													
+													children.push(IMG({
+														style : {
+															marginBottom : -4
+														},
+														src : '/resource/emoticon/' + emoticon + (EMOTICONS[emoticon].isGIF === true ? '.gif' : '.png') + (EMOTICONS[emoticon].isNoCaching === true ? '?' + Date.now() : ''),
+														on : {
+															load : () => {
+																// 로딩이 다 되면 스크롤 끝으로
+																if (isToScrollBottom === true || chatData.userId === user.uid) {
+																	scrollToEnd();
+																}
+															},
+															doubletap : (e) => {
+																
+																messageInput.setValue(messageInput.getValue() + ':' + emoticon + ':');
+																messageInput.focus();
+																
+																e.stopDefault();
 															}
 														}
-													},
-													contentStyle : {
-														padding : 0
-													},
-													msg : DIV({
-														style : {
-															height : 300,
-															overflowY : 'scroll',
-															fontSize : 14,
-															padding : 10,
-															lineHeight : '1.4em',
-															textAlign : 'left'
-														},
-														c : originMessage
-													})
-												});
+													}));
+													
+													message = replaceEmoticon(message.substring(index + emoticonStr.length));
+												}
+												
+												else {
+													children.push(message);
+												}
 											}
-										}
-									}));
-								}
-								
-								return SPAN({
-									c : children
-								});
-							})
+											
+											return message;
+										};
+										
+										// 링크를 찾아 교체합니다.
+										let replaceLink = () => {
+											
+											let match = message.match(URL_REGEX);
+											if (match === TO_DELETE) {
+												message = replaceEmoticon(message);
+											}
+											
+											else {
+												
+												let url = match[0];
+												if (url.indexOf(' ') !== -1) {
+													url = url.substring(0, url.indexOf(' '));
+												}
+												
+												let index = message.indexOf(url);
+												
+												message = replaceEmoticon(message.substring(0, index));
+												message = message.substring(index + url.length);
+												
+												children.push(A({
+													style : {
+														textDecoration : 'underline'
+													},
+													target : '_blank',
+													href : url,
+													c : url
+												}));
+												
+												replaceLink();
+											}
+										};
+										
+										replaceLink();
+									});
+									
+									// 너무 긴 메시지면 더보기 추가
+									if (message !== originMessage) {
+										children.push(' ...');
+										children.push(A({
+											style : {
+												textDecoration : 'underline'
+											},
+											c : '[더보기]',
+											on : {
+												tap : () => {
+													Yogurt.Alert({
+														style : {
+															onDisplayResize : (width) => {
+																if (width < 800) {
+																	return {
+																		width : 300
+																	};
+																} else if (width < 1200) {
+																	return {
+																		width : 600
+																	};
+																} else {
+																	return {
+																		width : 1000
+																	};
+																}
+															}
+														},
+														contentStyle : {
+															padding : 0
+														},
+														msg : DIV({
+															style : {
+																height : 300,
+																overflowY : 'scroll',
+																fontSize : 14,
+																padding : 10,
+																lineHeight : '1.4em',
+																textAlign : 'left'
+															},
+															c : originMessage
+														})
+													});
+												}
+											}
+										}));
+									}
+									
+									return SPAN({
+										c : children
+									});
+								})
+							)
 						)]
 					}));
 					
@@ -1073,6 +1152,11 @@ global.ChatController = OBJECT({
 							icon.setSrc(url);
 						});
 					});
+					
+					if (chatData.createTime !== undefined) {
+						let cal = CALENDAR(new Date(chatData.createTime));
+						message.getEl().title = '작성 시간 ' + cal.getHour(true) + ':' + cal.getMinute(true) + ':' + cal.getSecond(true);
+					}
 				}
 				
 				// 마지막 메시지를 보고있거나 자기가 쓴 글이라면 스크롤 맨 아래로
