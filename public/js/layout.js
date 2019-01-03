@@ -80,7 +80,7 @@ global.Layout = OBJECT({
 							color : '#666',
 							fontSize : 18
 						},
-						c : '0.2'
+						c : '0.3'
 					})]
 				})
 			}),
