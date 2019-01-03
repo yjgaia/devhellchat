@@ -912,7 +912,8 @@ global.ChatController = OBJECT({
 															left : width / 2 - 483 / 4,
 															top : height / 2 - 895 / 4
 														};
-													}
+													},
+													boxShadow : '4px 4px 2px 2px rgba(0, 0, 0, 0.5)'
 												},
 												c : [P({
 													style : {
