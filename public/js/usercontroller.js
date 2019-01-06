@@ -118,7 +118,7 @@ global.UserController = OBJECT({
 					introduce : intoduce
 				});
 				
-				signedUserData.intoduce = userData.intoduce;
+				signedUserData.intoduce = intoduce;
 			};
 		};
 	}
