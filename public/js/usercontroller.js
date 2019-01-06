@@ -12,7 +12,11 @@ global.UserController = OBJECT({
 			//REQUIRED: userId
 			//REQUIRED: callback
 			
-			if (userDataCache[userId] !== undefined) {
+			if (userId === signedUserId) {
+				callback(signedUserData);
+			}
+			
+			else if (userDataCache[userId] !== undefined) {
 				callback(userDataCache[userId]);
 			}
 			
