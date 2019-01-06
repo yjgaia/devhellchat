@@ -114,14 +114,14 @@ global.UserController = OBJECT({
 			};
 			
 			// 자기 소개 수정
-			let updateIntroduce = self.updateIntroduce = (intoduce) => {
+			let updateIntroduce = self.updateIntroduce = (introduce) => {
 				
 				userRef.update({
-					introduce : intoduce
+					introduce : introduce
 				});
 				
 				if (userDataCache[signedUserId] !== undefined) {
-					userDataCache[signedUserId].intoduce = intoduce;
+					userDataCache[signedUserId].introduce = introduce;
 				}
 			};
 		};
