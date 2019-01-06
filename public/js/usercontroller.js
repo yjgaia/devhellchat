@@ -12,11 +12,7 @@ global.UserController = OBJECT({
 			//REQUIRED: userId
 			//REQUIRED: callback
 			
-			if (userId === signedUserId) {
-				callback(signedUserData);
-			}
-			
-			else if (userDataCache[userId] !== undefined) {
+			if (userDataCache[userId] !== undefined) {
 				callback(userDataCache[userId]);
 			}
 			
@@ -107,9 +103,11 @@ global.UserController = OBJECT({
 						userData.coin += exp;
 						userData.level = resultLevel;
 						
-						signedUserData.exp = userData.exp;
-						signedUserData.level = userData.level;
-						signedUserData.coin = userData.coin;
+						if (userDataCache[signedUserId] !== undefined) {
+							userDataCache[signedUserId].exp = userData.exp;
+							userDataCache[signedUserId].level = userData.level;
+							userDataCache[signedUserId].coin = userData.coin;
+						}
 					}
 					return userData;
 				});
@@ -122,7 +120,9 @@ global.UserController = OBJECT({
 					introduce : intoduce
 				});
 				
-				signedUserData.intoduce = intoduce;
+				if (userDataCache[signedUserId] !== undefined) {
+					userDataCache[signedUserId].intoduce = intoduce;
+				}
 			};
 		};
 	}
