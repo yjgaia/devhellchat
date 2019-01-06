@@ -660,7 +660,7 @@ global.ChatController = OBJECT({
 				}
 				
 				// 새 유게짱
-				if (chatData.isUGay === true) {
+				else if (chatData.isUGay === true) {
 					addSystemMessage('새 유게짱!', A({
 						style : {
 							textDecoration : 'underline'

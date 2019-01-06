@@ -2,28 +2,30 @@
 	/* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
 	"rules": {
 		"connections": {
-			".read": "auth != null",
-			".write": "auth != null"
+			".read": "auth !== null",
+			".write": "auth !== null"
 		},
 		"connections-discord": {
-			".read": "auth != null",
-			".write": "auth != null"
+			".read": "auth !== null",
+			".write": "auth !== null"
 		},
 		"chats": {
-			".read": "auth != null",
-			".write": "auth != null"
+			".read": "auth !== null",
+			"$chat": {
+				".write": "auth !== null",
+				".validate": "newData.child('userId').val() === null || newData.child('userId').val() === auth.uid"
+			}
 		},
 		"users": {
+			".read": "auth !== null",
 			"$id": {
-				".read": "auth != null",
 				".write": "$id === auth.uid"
 			}
 		},
 		"ugay": {
-			".read": "auth != null",
+			".read": "auth !== null",
 			"$id": {
-				".read": "auth != null",
-				".write": "auth != null"
+				".write": "auth !== null"
 			}
 		}
 	}
