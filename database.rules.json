@@ -19,7 +19,7 @@
 		"users": {
 			".read": "auth !== null",
 			"$id": {
-				".write": "$id === auth.uid"
+				".write": "$id === auth.uid && data.child('exp').val() <= newData.child('exp').val()"
 			}
 		},
 		"ugay": {

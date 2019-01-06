@@ -102,6 +102,10 @@ global.UserController = OBJECT({
 						
 						userData.coin += exp;
 						userData.level = resultLevel;
+						
+						signedUserData.exp = userData.exp;
+						signedUserData.level = userData.level;
+						signedUserData.coin = userData.coin;
 					}
 					return userData;
 				});
@@ -109,9 +113,12 @@ global.UserController = OBJECT({
 			
 			// 자기 소개 수정
 			let updateIntroduce = self.updateIntroduce = (intoduce) => {
+				
 				userRef.update({
 					introduce : intoduce
 				});
+				
+				signedUserData.intoduce = userData.intoduce;
 			};
 		};
 	}
