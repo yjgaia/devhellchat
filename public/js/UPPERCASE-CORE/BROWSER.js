@@ -4246,7 +4246,13 @@ global.VALID = CLASS((cls) => {
 		//OPTIONAL: params.min
 		//REQUIRED: params.max
 		
-		let str = String(params.value);
+		let value = params.value;
+		
+		if (CHECK_IS_DATA(value) === true) {
+			return false;
+		}
+		
+		let str = String(value);
 		let min = params.min;
 		let max = params.max;
 		
@@ -6900,33 +6906,48 @@ OVERRIDE(MSG, (origin) => {
 			//REQUIRED: url
 			//REQUIRED: callback
 			
-			GET(url, (content) => {
+			if (CHECK_IS_ARRAY(url) === true) {
 				
-				let data = {};
+				NEXT(url, [
+				(url, next) => {
+					loadCSV(url, next);
+				},
 				
-				let langs;
-				EACH(__PAPA.parse(content).data, (texts, i) => {
+				() => {
+					return callback;
+				}]);
+			}
+			
+			else {
+				
+				GET(url, (content) => {
 					
-					// 첫번째 줄은 언어 설정
-					if (i === 0) {
-						langs = texts;
-					}
+					let data = {};
 					
-					else {
-						let subData = {};
-						EACH(texts, (text, j) => {
-							if (j > 0) {
-								subData[langs[j]] = text.replace(/\\n/, '\n');
-							}
-						});
-						data[texts[0]] = subData;
-					}
+					let langs;
+					EACH(__PAPA.parse(content).data, (texts, i) => {
+						
+						// 첫번째 줄은 언어 설정
+						if (i === 0) {
+							langs = texts;
+						}
+						
+						else {
+							let subData = {};
+							EACH(texts, (text, j) => {
+								if (j > 0) {
+									subData[langs[j]] = text.replace(/\\n/, '\n');
+								}
+							});
+							data[texts[0]] = subData;
+						}
+					});
+					
+					addData(data);
+					
+					callback();
 				});
-				
-				addData(data);
-				
-				callback();
-			});
+			}
 		};
 		
 		return {
@@ -7013,6 +7034,118 @@ OVERRIDE(MSG, (origin) => {
 });
 
 /*
+ * 세션 저장소 클래스
+ * 
+ * 웹 브라우저가 종료되면 저장된 값들이 삭제됩니다.
+ */
+global.SESSION_STORE = CLASS({
+
+	init : (inner, self, storeName) => {
+		//REQUIRED: storeName
+		
+		// gen full name.
+		let genFullName = (name) => {
+			//REQUIRED: name
+
+			return storeName + '.' + name;
+		};
+
+		let save = self.save = (params) => {
+			//REQUIRED: params
+			//REQUIRED: params.name
+			//REQUIRED: params.value
+
+			let name = params.name;
+			let value = params.value;
+
+			sessionStorage.setItem(genFullName(name), STRINGIFY(value));
+		};
+
+		let get = self.get = (name) => {
+			//REQUIRED: name
+
+			let value = PARSE_STR(sessionStorage.getItem(genFullName(name)));
+
+			if (value === TO_DELETE) {
+				value = undefined;
+			}
+
+			return value;
+		};
+
+		let remove = self.remove = (name) => {
+			//REQUIRED: name
+			
+			sessionStorage.removeItem(genFullName(name));
+		};
+
+		let all = self.all = () => {
+			
+			let all = {};
+			
+			EACH(sessionStorage, (value, fullName) => {
+				
+				if (fullName.indexOf(storeName + '.') === 0) {
+					
+					all[fullName.substring(storeName.length + 1)] = PARSE_STR(value);
+				}
+			});
+			
+			return all;
+		};
+
+		let count = self.count = () => {
+			
+			let count = 0;
+			
+			EACH(sessionStorage, (value, fullName) => {
+				
+				if (fullName.indexOf(storeName + '.') === 0) {
+					count += 1;
+				}
+			});
+			
+			return count;
+		};
+
+		let clear = self.clear = () => {
+			
+			EACH(sessionStorage, (value, fullName) => {
+				
+				if (fullName.indexOf(storeName + '.') === 0) {
+					
+					remove(fullName.substring(storeName.length + 1));
+				}
+			});
+		};
+	}
+});
+
+FOR_BOX((box) => {
+
+	box.SESSION_STORE = CLASS({
+
+		init : (inner, self, storeName) => {
+			//REQUIRED: storeName
+
+			let store = SESSION_STORE(box.boxName + '.' + storeName);
+
+			let save = self.save = store.save;
+			
+			let get = self.get = store.get;
+			
+			let remove = self.remove = store.remove;
+			
+			let all = self.all = store.all;
+			
+			let count = self.count = store.count;
+			
+			let clear = self.clear = store.clear;
+		}
+	});
+});
+
+/*
  * 사운드 파일을 재생하는 SOUND 클래스
  */
 global.SOUND = CLASS((cls) => {
@@ -7022,13 +7155,14 @@ global.SOUND = CLASS((cls) => {
 
 	return {
 
-		init : (inner, self, params) => {
+		init : (inner, self, params, onEndHandler) => {
 			//REQUIRED: params
 			//OPTIONAL: params.ogg
 			//OPTIONAL: params.mp3
 			//OPTIONAL: params.wav
 			//OPTIONAL: params.isLoop
 			//OPTIONAL: params.volume
+			//OPTIONAL: onEndHandler
 
 			let ogg = params.ogg;
 			let mp3 = params.mp3;
@@ -7044,10 +7178,19 @@ global.SOUND = CLASS((cls) => {
 			let source;
 			let gainNode;
 			
+			let isLoaded = false;
+			
 			let startedAt = 0;
 			let pausedAt = 0;
 			
+			let duration;
+			let isPlaying = false;
+			
 			let delayed;
+			
+			let fadeInSeconds;
+			
+			let eventMap = {};
 			
 			// init audioContext.
 			if (audioContext === undefined) {
@@ -7078,16 +7221,33 @@ global.SOUND = CLASS((cls) => {
 				request.onload = () => {
 	
 					audioContext.decodeAudioData(request.response, (_buffer) => {
-	
-						gainNode = audioContext.createGain();
-	
-						buffer = _buffer;
 						
-						gainNode.connect(audioContext.destination);
-						gainNode.gain.setTargetAtTime(volume, 0, 0);
-	
-						if (delayed !== undefined) {
-							delayed();
+						if (buffer === undefined) {
+							
+							gainNode = audioContext.createGain();
+		
+							buffer = _buffer;
+							
+							duration = buffer.duration;
+							
+							gainNode.connect(audioContext.destination);
+							
+							if (fadeInSeconds === undefined) {
+								gainNode.gain.setValueAtTime(volume, 0);
+							} else {
+								gainNode.gain.setValueAtTime(0, 0);
+								gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + fadeInSeconds);
+								fadeInSeconds = undefined;
+							}
+		
+							if (delayed !== undefined) {
+								delayed();
+							}
+							
+							fireEvent('load');
+							off('load');
+							
+							isLoaded = true;
 						}
 					});
 				};
@@ -7096,7 +7256,12 @@ global.SOUND = CLASS((cls) => {
 			
 			ready();
 
-			let play = self.play = () => {
+			let play = self.play = (at) => {
+				//OPTIONAL: at
+				
+				if (at !== undefined) {
+					pausedAt = at;
+				}
 
 				delayed = () => {
 
@@ -7105,16 +7270,21 @@ global.SOUND = CLASS((cls) => {
 					source.connect(gainNode);
 					source.loop = isLoop;
 					
-					startedAt = Date.now() - pausedAt;
-					source.start(0, (pausedAt / 1000) % buffer.duration);
+					startedAt = Date.now() / 1000 - pausedAt;
+					source.start(0, pausedAt % buffer.duration);
 					
 					delayed = undefined;
 					
 					if (isLoop !== true) {
 						source.onended = () => {
 							stop();
+							if (onEndHandler !== undefined) {
+								onEndHandler();
+							}
 						};
 					}
+					
+					isPlaying = true;
 				};
 
 				if (buffer === undefined) {
@@ -7126,6 +7296,14 @@ global.SOUND = CLASS((cls) => {
 				return self;
 			};
 			
+			let checkIsPlaying = self.checkIsPlaying = () => {
+				return isPlaying;
+			};
+			
+			let getStartAt = self.getStartAt = () => {
+				return startedAt;
+			};
+			
 			let pause = self.pause = () => {
 				
 				if (source !== undefined) {
@@ -7133,10 +7311,12 @@ global.SOUND = CLASS((cls) => {
 					source.disconnect();
 					source = undefined;
 					
-					pausedAt = Date.now() - startedAt;
+					pausedAt = Date.now() / 1000 - startedAt;
 				}
 				
 				delayed = undefined;
+				
+				isPlaying = false;
 			};
 
 			let stop = self.stop = () => {
@@ -7156,6 +7336,8 @@ global.SOUND = CLASS((cls) => {
 				
 				buffer = undefined;
 				delayed = undefined;
+				
+				isPlaying = false;
 			};
 			
 			let setVolume = self.setVolume = (_volume) => {
@@ -7164,8 +7346,12 @@ global.SOUND = CLASS((cls) => {
 				volume = _volume;
 				
 				if (gainNode !== undefined) {
-					gainNode.gain.setTargetAtTime(volume, 0, 0);
+					gainNode.gain.setValueAtTime(volume, 0);
 				}
+			};
+			
+			let getVolume = self.getVolume = () => {
+				return volume;
 			};
 			
 			let setPlaybackRate = self.setPlaybackRate = (playbackRate) => {
@@ -7173,6 +7359,104 @@ global.SOUND = CLASS((cls) => {
 				
 				if (source !== undefined) {
 					source.playbackRate.setValueAtTime(playbackRate, 0);
+				}
+			};
+			
+			let fadeIn = self.fadeIn = (seconds) => {
+				//REQUIRED: seconds
+				
+				if (gainNode !== undefined) {
+					gainNode.gain.setValueAtTime(0, 0);
+					gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + seconds);
+				}
+				
+				else {
+					fadeInSeconds = seconds;
+				}
+				
+				play();
+			};
+			
+			let fadeOut = self.fadeOut = (seconds) => {
+				//REQUIRED: seconds
+				
+				if (gainNode !== undefined) {
+					gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + seconds);
+				}
+				
+				DELAY(seconds, () => {
+					stop();
+				});
+			};
+			
+			let getDuration = self.getDuration = () => {
+				return duration;
+			};
+			
+			let on = self.on = (eventName, eventHandler) => {
+				//REQUIRED: eventName
+				//REQUIRED: eventHandler
+				
+				if (eventMap[eventName] === undefined) {
+					eventMap[eventName] = [];
+				}
+	
+				eventMap[eventName].push(eventHandler);
+				
+				if (eventName === 'load' && isLoaded === true) {
+					fireEvent('load');
+					off('load');
+				}
+			};
+			
+			let checkIsEventExists = self.checkIsEventExists = (eventName) => {
+				//REQUIRED: eventName
+				
+				return eventMap[eventName] !== undefined;
+			};
+	
+			let off = self.off = (eventName, eventHandler) => {
+				//REQUIRED: eventName
+				//OPTIONAL: eventHandler
+	
+				if (eventMap[eventName] !== undefined) {
+	
+					if (eventHandler !== undefined) {
+	
+						REMOVE({
+							array: eventMap[eventName],
+							value: eventHandler
+						});
+					}
+	
+					if (eventHandler === undefined || eventMap[eventName].length === 0) {
+						delete eventMap[eventName];
+					}
+				}
+			};
+	
+			let fireEvent = self.fireEvent = (eventNameOrParams) => {
+				//REQUIRED: eventNameOrParams
+				//REQUIRED: eventNameOrParams.eventName
+				//OPTIONAL: eventNameOrParams.e
+				
+				let eventName;
+				let e;
+				
+				if (CHECK_IS_DATA(eventNameOrParams) !== true) {
+					eventName = eventNameOrParams;
+				} else {
+					eventName = eventNameOrParams.eventName;
+					e = eventNameOrParams.e;
+				}
+				
+				let eventHandlers = eventMap[eventName];
+	
+				if (eventHandlers !== undefined) {
+					
+					for (let i = 0; i < eventHandlers.length; i += 1) {
+						eventHandlers[i](e === undefined ? EMPTY_E() : e, self);
+					}
 				}
 			};
 		}
@@ -7188,13 +7472,14 @@ global.SOUND_ONCE = CLASS({
 		return SOUND;
 	},
 
-	init : (inner, self, params) => {
+	init : (inner, self, params, onEndHandler) => {
 		//REQUIRED: params
 		//OPTIONAL: params.ogg
 		//OPTIONAL: params.mp3
 		//OPTIONAL: params.wav
 		//OPTIONAL: params.isLoop
 		//OPTIONAL: params.volume
+		//OPTIONAL: onEndHandler
 
 		self.play();
 	}
@@ -7756,8 +8041,6 @@ global.NODE = CLASS({
 			wrapperDom = dom;
 			wrapperEl = dom.getEl();
 
-			originDisplay = getStyle('display');
-
 			on('show', () => {
 
 				EACH(childNodes, (childNode) => {
@@ -8125,6 +8408,8 @@ global.NODE = CLASS({
 
 				// empty children.
 				empty();
+				
+				wrapperDom.empty();
 
 				// remove from parent node.
 				wrapperEl.parentNode.removeChild(wrapperEl);
@@ -8133,14 +8418,18 @@ global.NODE = CLASS({
 
 				fireEvent('remove');
 
-				EVENT.removeAll({
-					node : self
-				});
-
 				// free memory.
 				wrapperEl = undefined;
 				contentEl = undefined;
 			}
+
+			EVENT.removeAll({
+				node : self
+			});
+
+			EVENT.removeAll({
+				node : wrapperDom
+			});
 			
 			// free memory.
 			data = undefined;
@@ -8155,7 +8444,7 @@ global.NODE = CLASS({
 		let on = self.on = (eventName, eventHandler) => {
 			//REQUIRED: eventName
 			//REQUIRED: eventHandler
-
+			
 			EVENT({
 				node : self,
 				name : eventName
@@ -8261,6 +8550,8 @@ global.NODE = CLASS({
 		};
 
 		let hide = self.hide = () => {
+			
+			originDisplay = getStyle('display');
 
 			addStyle({
 				display : 'none'
@@ -8296,7 +8587,7 @@ global.NODE = CLASS({
 			if (wrapperEl === document.body) {
 				return true;
 			} else {
-				return parentNode !== undefined && parentNode.checkIsShowing() === true && getStyle('display') !== 'none';
+				return getStyle('display') !== 'none';
 			}
 		};
 		
@@ -8386,7 +8677,9 @@ global.NODE = CLASS({
 
 		if (on !== undefined) {
 			EACH(on, (handler, name) => {
-				self.on(name, handler);
+				if (handler !== undefined) {
+					self.on(name, handler);
+				}
 			});
 		}
 
@@ -8786,7 +9079,7 @@ global.EVENT = CLASS((cls) => {
 			} else {
 				nodeId = node.id;
 			}
-
+			
 			// push event to map.
 
 			if (eventMaps[nodeId] === undefined) {
@@ -9878,6 +10171,9 @@ global.IMG = CLASS({
 		let height = params.height;
 
 		let el = self.getEl();
+		
+		// CORS 이슈 해결
+		//el.crossOrigin = 'anonymous';
 		
 		//OVERRIDE: self.getWidth
 		let getWidth = self.getWidth = () => {
@@ -11863,111 +12159,106 @@ global.ENCRYPTION_REQUEST = METHOD({
 });
 
 /*!
-audiocontext-polyfill.js v0.1.1
+audiocontext-polyfill.js v0.1.2
 (c) 2013 - 2014 Shinnosuke Watanabe
 Licensed under the MIT license
 */
+'use strict';
 
-(function(window, undefined) {
-  'use strict';
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
-  window.AudioContext = window.AudioContext ||
-                        window.webkitAudioContext;
-  
-  if (window.AudioContext !== undefined) {
+if (window.AudioContext !== undefined) {
 
-    window.OfflineAudioContext = window.OfflineAudioContext ||
-                                 window.webkitOfflineAudioContext;
+	window.OfflineAudioContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
 
-    var Proto = AudioContext.prototype;
+	let Proto = AudioContext.prototype;
 
-    var tmpctx = new AudioContext();
+	let tmpctx = new AudioContext();
 
-    // Support alternate names
-    // start (noteOn), stop (noteOff), createGain (createGainNode), etc.
-    var isStillOld = function(normative, old) {
-      return normative === undefined && old !== undefined;
-    };
+	// Support alternate names
+	// start (noteOn), stop (noteOff), createGain (createGainNode), etc.
+	let isStillOld = (normative, old) => {
+		return normative === undefined && old !== undefined;
+	};
 
-    var bufProto = tmpctx.createBufferSource().constructor.prototype;
+	let bufProto = tmpctx.createBufferSource().constructor.prototype;
 
-    if (isStillOld(bufProto.start, bufProto.noteOn) ||
-    isStillOld(bufProto.stop, bufProto.noteOff)) {
-      var nativeCreateBufferSource = Proto.createBufferSource;
+	if (isStillOld(bufProto.start, bufProto.noteOn) || isStillOld(bufProto.stop, bufProto.noteOff)) {
+		
+		let nativeCreateBufferSource = Proto.createBufferSource;
 
-      Proto.createBufferSource = function createBufferSource() {
-        var returnNode = nativeCreateBufferSource.call(this);
-        returnNode.start = returnNode.start || returnNode.noteOn;
-        returnNode.stop = returnNode.stop || returnNode.noteOff;
+		Proto.createBufferSource = function() {
+			let returnNode = nativeCreateBufferSource.call(this);
+			returnNode.start = returnNode.start || returnNode.noteOn;
+			returnNode.stop = returnNode.stop || returnNode.noteOff;
 
-        return returnNode;
-      };
-    }
+			return returnNode;
+		};
+	}
 
-    // Firefox 24 doesn't support OscilatorNode
-    if (typeof tmpctx.createOscillator === 'function') {
-      var oscProto = tmpctx.createOscillator().constructor.prototype;
+	// Firefox 24 doesn't support OscilatorNode
+	if (typeof tmpctx.createOscillator === 'function') {
+		let oscProto = tmpctx.createOscillator().constructor.prototype;
 
-      if (isStillOld(oscProto.start, oscProto.noteOn) ||
-      isStillOld(oscProto.stop, oscProto.noteOff)) {
-        var nativeCreateOscillator = Proto.createOscillator;
+		if (isStillOld(oscProto.start, oscProto.noteOn) ||
+			isStillOld(oscProto.stop, oscProto.noteOff)) {
+			let nativeCreateOscillator = Proto.createOscillator;
 
-        Proto.createOscillator = function createOscillator() {
-          var returnNode = nativeCreateOscillator.call(this);
-          returnNode.start = returnNode.start || returnNode.noteOn;
-          returnNode.stop = returnNode.stop || returnNode.noteOff;
+			Proto.createOscillator = function() {
+				let returnNode = nativeCreateOscillator.call(this);
+				returnNode.start = returnNode.start || returnNode.noteOn;
+				returnNode.stop = returnNode.stop || returnNode.noteOff;
 
-          return returnNode;
-        };
-      }
-    }
+				return returnNode;
+			};
+		}
+	}
 
-    if (Proto.createGain === undefined && Proto.createGainNode !== undefined) {
-      Proto.createGain = Proto.createGainNode;
-    }
+	if (Proto.createGain === undefined && Proto.createGainNode !== undefined) {
+		Proto.createGain = Proto.createGainNode;
+	}
 
-    if (Proto.createDelay === undefined && Proto.createDelayNode !== undefined) {
-      Proto.createDelay = Proto.createGainNode;
-    }
+	if (Proto.createDelay === undefined && Proto.createDelayNode !== undefined) {
+		Proto.createDelay = Proto.createGainNode;
+	}
 
-    if (Proto.createScriptProcessor === undefined &&
-    Proto.createJavaScriptNode !== undefined) {
-      Proto.createScriptProcessor = Proto.createJavaScriptNode;
-    }
+	if (Proto.createScriptProcessor === undefined &&
+		Proto.createJavaScriptNode !== undefined) {
+		Proto.createScriptProcessor = Proto.createJavaScriptNode;
+	}
 
-    // Black magic for iOS
-    var is_iOS = (navigator.userAgent.indexOf('like Mac OS X') !== -1);
-    if (is_iOS) {
-      var OriginalAudioContext = AudioContext;
-      window.AudioContext = function AudioContext() {
-        var iOSCtx = new OriginalAudioContext();
+	// Black magic for iOS
+	if (navigator.userAgent.indexOf('like Mac OS X') !== -1) {
+		
+		let OriginalAudioContext = AudioContext;
+		
+		window.AudioContext = function() {
+			let iOSCtx = new OriginalAudioContext();
 
-        var body = document.body;
-        var tmpBuf = iOSCtx.createBufferSource();
-        var tmpProc = iOSCtx.createScriptProcessor(256, 1, 1);
+			let body = document.body;
+			let tmpBuf = iOSCtx.createBufferSource();
+			let tmpProc = iOSCtx.createScriptProcessor(256, 1, 1);
+			
+			let instantProcess = () => {
+				tmpBuf.start(0);
+				tmpBuf.connect(tmpProc);
+				tmpProc.connect(iOSCtx.destination);
+			};
 
-        body.addEventListener('touchstart', instantProcess, false);
+			body.addEventListener('touchstart', instantProcess, false);
 
-        function instantProcess() {
-          tmpBuf.start(0);
-          tmpBuf.connect(tmpProc);
-          tmpProc.connect(iOSCtx.destination);
-        }
+			// This function will be called once and for all.
+			tmpProc.onaudioprocess = () => {
+				tmpBuf.disconnect();
+				tmpProc.disconnect();
+				body.removeEventListener('touchstart', instantProcess, false);
+				tmpProc.onaudioprocess = null;
+			};
 
-        // This function will be called once and for all.
-        tmpProc.onaudioprocess = function() {
-          tmpBuf.disconnect();
-          tmpProc.disconnect();
-          body.removeEventListener('touchstart', instantProcess, false);
-          tmpProc.onaudioprocess = null;
-        };
-
-        return iOSCtx;
-      };
-    }
-  }
-}(window));
-
+			return iOSCtx;
+		};
+	}
+}
 /*
  * HTTP DELETE 요청을 보냅니다.
  */
@@ -12163,7 +12454,7 @@ global.REQUEST = METHOD({
 			errorListener = responseListenerOrListeners.error;
 		}
 		
-		(method === 'GET' || method === 'DELETE' ? fetch(url + '?' + paramStr, {
+		(method === 'GET' || method === 'DELETE' ? fetch(url.substring(0, 5) === 'data:' ? url : url + '?' + paramStr, {
 			method : method,
 			credentials : location.protocol !== 'file:' && host === BROWSER_CONFIG.host && port === BROWSER_CONFIG.port ? 'include' : undefined,
 			headers : new Headers(headers === undefined ? {} : headers)
