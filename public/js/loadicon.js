@@ -15,7 +15,6 @@ global.LoadIcon = METHOD((m) => {
 			//REQUIRED: callback
 			
 			iconsRef.child(userId).getDownloadURL().then((url) => {
-				console.log(url);
 				userIconURLs[userId] = url;
 				callback(url);
 			}).catch(() => {
