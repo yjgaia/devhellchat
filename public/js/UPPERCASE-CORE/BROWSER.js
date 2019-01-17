@@ -5979,6 +5979,7 @@ global.EACH = METHOD({
 			return false;
 		}
 
+		// when dataOrArrayOrString is data
 		else if (CHECK_IS_DATA(dataOrArrayOrString) === true) {
 
 			for (let name in dataOrArrayOrString) {
@@ -5990,6 +5991,7 @@ global.EACH = METHOD({
 			}
 		}
 
+		// when dataOrArrayOrString is func
 		else if (func === undefined) {
 
 			func = dataOrArrayOrString;
@@ -6119,39 +6121,61 @@ global.REPEAT = METHOD({
  */
 global.REVERSE_EACH = METHOD({
 
-	run : (arrayOrString, func) => {
-		//OPTIONAL: arrayOrString
+	run : (dataOrArrayOrString, func) => {
+		//OPTIONAL: dataOrArrayOrString
 		//REQUIRED: func
 		
-		if (arrayOrString === undefined) {
+		if (dataOrArrayOrString === undefined) {
 			return false;
 		}
 
-		// when arrayOrString is func
+		// when dataOrArrayOrString is data
+		else if (CHECK_IS_DATA(dataOrArrayOrString) === true) {
+			
+			let reverseNames = [];
+
+			for (let name in dataOrArrayOrString) {
+				reverseNames.push(name);
+			}
+			
+			let length = reverseNames.length;
+
+			for (let i = length - 1; i >= 0; i -= 1) {
+				let name = reverseNames[i];
+				
+				if (dataOrArrayOrString.hasOwnProperty === undefined || dataOrArrayOrString.hasOwnProperty(name) === true) {
+					if (func(dataOrArrayOrString[name], name) === false) {
+						return false;
+					}
+				}
+			}
+		}
+
+		// when dataOrArrayOrString is func
 		else if (func === undefined) {
 
-			func = arrayOrString;
-			arrayOrString = undefined;
+			func = dataOrArrayOrString;
+			dataOrArrayOrString = undefined;
 
-			return (arrayOrString) => {
-				return REVERSE_EACH(arrayOrString, func);
+			return (dataOrArrayOrString) => {
+				return REVERSE_EACH(dataOrArrayOrString, func);
 			};
 		}
 
-		// when arrayOrString is array or string
+		// when dataOrArrayOrString is array or string
 		else {
 
-			let length = arrayOrString.length;
+			let length = dataOrArrayOrString.length;
 
 			for (let i = length - 1; i >= 0; i -= 1) {
 
-				if (func(arrayOrString[i], i) === false) {
+				if (func(dataOrArrayOrString[i], i) === false) {
 					return false;
 				}
 				
 				// when shrink
-				if (arrayOrString.length < length) {
-					i += length - arrayOrString.length;
+				if (dataOrArrayOrString.length < length) {
+					i += length - dataOrArrayOrString.length;
 				}
 			}
 		}
@@ -6677,7 +6701,7 @@ global.INFO = OBJECT({
 
 			setLang(lang);
 
-			location.reload();
+			REFRESH();
 		};
 
 		let checkIsTouchDevice = self.checkIsTouchDevice = () => {
@@ -7152,6 +7176,34 @@ global.SOUND = CLASS((cls) => {
 
 	let audioContext;
 	let isCanPlayOGG = new Audio().canPlayType('audio/ogg') !== '';
+	
+	let bufferCache = {};
+	
+	let loadBuffer = (src, callback) => {
+		
+		if (bufferCache[src] !== undefined) {
+			callback(bufferCache[src]);
+		}
+		
+		else {
+			
+			let request = new XMLHttpRequest();
+			request.open('GET', src, true);
+			request.responseType = 'arraybuffer';
+			
+			request.onload = () => {
+				
+				audioContext.decodeAudioData(request.response, (buffer) => {
+					
+					bufferCache[src] = buffer;
+					
+					callback(buffer);
+				});
+			};
+			
+			request.send();
+		}
+	};
 
 	return {
 
@@ -7206,91 +7258,81 @@ global.SOUND = CLASS((cls) => {
 				src = wav;
 			}
 			
-			let request;
-			
 			let ready = () => {
 				
-				if (request !== undefined) {
-					request.abort();
-				}
-				
-				request = new XMLHttpRequest();
-				request.open('GET', src, true);
-				request.responseType = 'arraybuffer';
-	
-				request.onload = () => {
-	
-					audioContext.decodeAudioData(request.response, (_buffer) => {
+				loadBuffer(src, (_buffer) => {
+					
+					if (buffer === undefined) {
 						
-						if (buffer === undefined) {
-							
-							gainNode = audioContext.createGain();
-		
-							buffer = _buffer;
-							
-							duration = buffer.duration;
-							
-							gainNode.connect(audioContext.destination);
-							
-							if (fadeInSeconds === undefined) {
-								gainNode.gain.setValueAtTime(volume, 0);
-							} else {
-								gainNode.gain.setValueAtTime(0, 0);
-								gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + fadeInSeconds);
-								fadeInSeconds = undefined;
-							}
-		
-							if (delayed !== undefined) {
-								delayed();
-							}
-							
-							fireEvent('load');
-							off('load');
-							
-							isLoaded = true;
+						gainNode = audioContext.createGain();
+	
+						buffer = _buffer;
+						
+						duration = buffer.duration;
+						
+						gainNode.connect(audioContext.destination);
+						
+						if (fadeInSeconds === undefined) {
+							gainNode.gain.setValueAtTime(volume, 0);
+						} else {
+							gainNode.gain.setValueAtTime(0, 0);
+							gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + fadeInSeconds);
+							fadeInSeconds = undefined;
 						}
-					});
-				};
-				request.send();
+	
+						if (delayed !== undefined) {
+							delayed();
+						}
+						
+						fireEvent('load');
+						off('load');
+						
+						isLoaded = true;
+					}
+				});
 			};
-			
-			ready();
 
 			let play = self.play = (at) => {
 				//OPTIONAL: at
 				
-				if (at !== undefined) {
-					pausedAt = at;
-				}
-
-				delayed = () => {
-
-					source = audioContext.createBufferSource();
-					source.buffer = buffer;
-					source.connect(gainNode);
-					source.loop = isLoop;
+				if (isPlaying !== true) {
 					
-					startedAt = Date.now() / 1000 - pausedAt;
-					source.start(0, pausedAt % buffer.duration);
-					
-					delayed = undefined;
-					
-					if (isLoop !== true) {
-						source.onended = () => {
-							stop();
-							if (onEndHandler !== undefined) {
-								onEndHandler();
-							}
-						};
+					if (at !== undefined) {
+						pausedAt = at;
 					}
-					
-					isPlaying = true;
-				};
-
-				if (buffer === undefined) {
-					ready();
-				} else {
-					delayed();
+	
+					delayed = () => {
+						
+						if (isPlaying !== true) {
+							
+							source = audioContext.createBufferSource();
+							source.buffer = buffer;
+							source.connect(gainNode);
+							source.loop = isLoop;
+							
+							startedAt = Date.now() / 1000 - pausedAt;
+							source.start(0, pausedAt % buffer.duration);
+							
+							delayed = undefined;
+							
+							if (isLoop !== true) {
+								source.onended = () => {
+									stop();
+									if (onEndHandler !== undefined) {
+										onEndHandler();
+									}
+								};
+							}
+							
+							isPlaying = true;
+						}
+					};
+	
+					if (buffer === undefined) {
+						ready();
+					} else {
+						delayed();
+					}
 				}
 
 				return self;
@@ -7459,6 +7501,8 @@ global.SOUND = CLASS((cls) => {
 					}
 				}
 			};
+			
+			ready();
 		}
 	};
 });
@@ -8552,6 +8596,10 @@ global.NODE = CLASS({
 		let hide = self.hide = () => {
 			
 			originDisplay = getStyle('display');
+			
+			if (originDisplay === 'none') {
+				originDisplay = undefined;
+			}
 
 			addStyle({
 				display : 'none'
@@ -8587,7 +8635,7 @@ global.NODE = CLASS({
 			if (wrapperEl === document.body) {
 				return true;
 			} else {
-				return getStyle('display') !== 'none';
+				return getStyle('display') !== 'none' && getWidth() > 0;
 			}
 		};
 		
@@ -12827,6 +12875,8 @@ global.REFRESH = METHOD((m) => {
 					name : 'hashchange'
 				}, () => {
 					location.replace(savedHash === '' ? '#!/' : savedHash);
+					
+					history.back();
 				});
 		
 				location.href = '#!/' + getRefreshingURI();
@@ -12841,6 +12891,8 @@ global.REFRESH = METHOD((m) => {
 				
 				history.replaceState(undefined, undefined, '/' + savedURI);
 				MATCH_VIEW.checkAll();
+				
+				history.back();
 			}
 		}
 	};
