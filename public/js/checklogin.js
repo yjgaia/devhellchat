@@ -21,12 +21,19 @@ global.CheckLogin = METHOD((m) => {
 						style : {
 							paddingBottom : 20
 						},
-						c : AboutPanel({
+						c : [AboutPanel({
 							style : {
 								padding : 20,
 								marginBottom : 20
 							}
-						})
+						}), DIV({
+							style : {
+								padding : 20,
+								paddingTop : 0,
+								marginBottom : 20
+							},
+							c : '아래 이메일로 로그인으로 되어있는데 그냥 이메일 적고 다음 누르면 가입할 수 있음'
+						})]
 					}).appendTo(Layout.getContent());
 					
 					// 인증 처리
