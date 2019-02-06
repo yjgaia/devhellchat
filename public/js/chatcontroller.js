@@ -1,9 +1,9 @@
 global.ChatController = OBJECT({
 	
-	init : (inner, self) => {
-		
+	init : (inner, self) => {		
 		const URL_REGEX = /(http|https|ftp|telnet|news|mms):\/[^\"\'\s()]+/i;
 		const MAX_UPLOAD_FILE_SIZE = 26214400;
+		let backColor = '#FFF';
 		
 		// Firebase Ref들 가져오기
 		let chatsRef = firebase.database().ref('chats');
@@ -196,6 +196,11 @@ global.ChatController = OBJECT({
 			let uploadInput;
 			let uploadButton;
 			let semiMenu;
+			let collectionButton;
+			
+			global.Collections.appendTo(BODY);
+			global.Collections.hide();
+
 			messageForm = FORM({
 				style : {
 					position : 'absolute',
@@ -214,7 +219,7 @@ global.ChatController = OBJECT({
 						color : skinData.color,
 						onDisplayResize : (width) => {
 							return {
-								width : Layout.getContent().getWidth() - 100
+								width : Layout.getContent().getWidth() - 125
 							};
 						}
 					},
@@ -292,7 +297,7 @@ global.ChatController = OBJECT({
 				A({
 					style : {
 						position : 'absolute',
-						right : 50,
+						right : '3em',
 						bottom : 0,
 						padding : 8,
 						color : '#ccc',
@@ -437,6 +442,39 @@ global.ChatController = OBJECT({
 							uploadInput.select();
 						}
 					}
+				}),
+
+				
+				// 모아보기 버튼
+				collectionButton = A({
+					style : {
+						position : 'absolute',
+						right : '5.5em',
+						bottom : 0,
+						padding : 8,
+						color : '#ccc',
+						fontSize : 16
+					},
+					c : FontAwesome.GetIcon('archive'),
+					on : {
+						mouseover : (e, button) => {
+							button.addStyle({
+								color : '#999'
+							});
+						},
+						mouseout : (e, button) => {
+							button.addStyle({
+								color : '#ccc'
+							});
+						},
+						tap : () => {
+							if (global.Collections.getEl().style.display === 'none')
+								global.Collections.show();
+							else
+								global.Collections.hide();
+						}
+					},
+
 				})],
 				
 				on : {
@@ -637,9 +675,31 @@ global.ChatController = OBJECT({
 			};
 			
 			let chatDataSet = [];
+			global.bus = {
+				links : [],
+				files : [],
+				codes : [],
+				pictures : [],
+				target : {
+					name : '',
+					index : -1
+				},
+				// time : '',
+				debug : 'links / files / codes / pictures'
+			};
 			
 			// 새 메시지가 추가되면
 			chatsRef.on('child_added', (snapshot) => {
+				// console.log(snapshot, snapshot.val());
+				// 메시지 닉네임 바뀔때마다 배경색
+				// const chat = snapshot.node_.children_.root_.left;
+				// const nickname = chat.right.value.value_;
+				// const prevNickname = (chatDataSet[chatDataSet.length-1] || {}).name;
+
+				// if (nickname && prevNickname && nickname !== prevNickname) {
+				// 	backColor = backColor === '#FFF' ? '#F7F7F7' : '#FFF';
+				// }
+
 				loading.remove();
 				
 				let isToScrollBottom = messageList.getScrollTop() >= messageList.getScrollHeight() - messageList.getHeight() - 10;
@@ -693,6 +753,32 @@ global.ChatController = OBJECT({
 										padding : '0 8px',
 										paddingBottom : 8
 									};
+								}
+							},
+							position : 'relative',
+							backgroundColor : backColor
+						},
+						on : {
+							mouseover : (e, el) => {
+								el.addStyle({
+									backgroundColor : '#dfdfdf',
+								});
+
+								// 컨벤션에 올바른지 검토 필요
+								const time = el.getContentEl().querySelector('span.time');
+								if (time) {
+									time.style.opacity = 1;
+								}
+							},
+							mouseout : (e, el) => {
+								el.addStyle({
+									backgroundColor: 'initial',
+								});
+
+								// 컨벤션에 올바른지 검토 필요
+								const time = el.getContentEl().querySelector('span.time');
+								if (time) {
+									time.style.opacity = 0;
 								}
 							}
 						},
@@ -801,6 +887,32 @@ global.ChatController = OBJECT({
 							target : '_blank',
 							href : chatData.downloadURL,
 							on : {
+								DOMNodeInsertedIntoDocument : () => {
+									if (chatData.isImage) {
+										global.bus.pictures.push({
+											fileName : chatData.fileName,
+											downloadURL : chatData.downloadURL,
+											name : chatData.name,
+											userIconURL : chatData.userIconURL,
+											userId : chatData.userId,
+										});
+										global.bus.target.name = 'pictures';
+										global.bus.target.index = global.bus.pictures.length - 1;
+									} else {
+										global.bus.files.push({
+											fileName : chatData.fileName,
+											downloadURL : chatData.downloadURL,
+											name : chatData.name,
+											userIconURL : chatData.userIconURL,
+											userId : chatData.userId,
+										});
+										global.bus.target.name = 'files';
+										global.bus.target.index = global.bus.files.length - 1;
+									}
+									// let cal = CALENDAR(new Date(chatData.createTime));
+									// global.bus.time = cal.getHour(true) + ':' + cal.getMinute(true) + ':' + cal.getSecond(true);
+									global.Collections.fireEvent('bus');
+								},
 								mouseover : (e) => {
 									
 									// 모바일 제외
@@ -1052,8 +1164,7 @@ global.ChatController = OBJECT({
 										};
 										
 										// 링크를 찾아 교체합니다.
-										let replaceLink = () => {
-											
+										let replaceLink = () => {											
 											let match = message.match(URL_REGEX);
 											if (match === TO_DELETE) {
 												message = replaceEmoticon(message);
@@ -1073,12 +1184,30 @@ global.ChatController = OBJECT({
 												
 												children.push(A({
 													style : {
-														textDecoration : 'underline'
+														textDecoration : 'underline',
+														color : '#3280b9'
 													},
 													target : '_blank',
 													href : url,
 													c : url
 												}));
+
+												function getSiteName(url) {
+													return url.split('/')[2].replace(/w*\.youtube\.com/i, 'Youtube');
+												}
+
+												global.bus.links.push({
+													fileName : getSiteName(url),
+													downloadURL : url,
+													name : chatData.name,
+													userIconURL : chatData.userIconURL,
+													userId : chatData.userId,
+												});
+												global.bus.target.name = 'links';
+												global.bus.target.index = global.bus.links.length - 1;
+												let cal = CALENDAR(new Date(chatData.createTime));
+												global.bus.time = cal.getHour(true) + ':' + cal.getMinute(true) + ':' + cal.getSecond(true);
+												global.Collections.fireEvent('bus');
 												
 												replaceLink();
 											}
@@ -1092,7 +1221,8 @@ global.ChatController = OBJECT({
 										children.push(' ...');
 										children.push(A({
 											style : {
-												textDecoration : 'underline'
+												textDecoration : 'underline',
+												color : '#3280b9'
 											},
 											c : '[더보기]',
 											on : {
@@ -1157,6 +1287,24 @@ global.ChatController = OBJECT({
 					if (chatData.createTime !== undefined) {
 						let cal = CALENDAR(new Date(chatData.createTime));
 						message.getEl().title = '작성 시간 ' + cal.getHour(true) + ':' + cal.getMinute(true) + ':' + cal.getSecond(true);
+						message.append(SPAN({
+							style : {
+								opacity : 0,
+								fontSize : '.8em',
+								color : '#FFF',
+								fontWeight : 'bold',
+								marginRight : '4px',
+								position : 'absolute',
+								right : 0,
+								bottom : '.2em',
+								backgroundColor : '#afbbcc',
+								borderRadius : '4px',
+								padding : '.25em .5em',
+								userSelect : 'none'
+							},
+							cls : 'time',
+							c : cal.getHour(true) + ' : ' + cal.getMinute(true) + ' : ' + cal.getSecond(true)
+						}));
 					}
 				}
 				
