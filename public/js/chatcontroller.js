@@ -1286,7 +1286,7 @@ global.ChatController = OBJECT({
 					
 					if (chatData.createTime !== undefined) {
 						let cal = CALENDAR(new Date(chatData.createTime));
-						message.getEl().title = '작성 시간 ' + cal.getHour(true) + ':' + cal.getMinute(true) + ':' + cal.getSecond(true);
+						//message.getEl().title = '작성 시간 ' + cal.getHour(true) + ':' + cal.getMinute(true) + ':' + cal.getSecond(true);
 						message.append(SPAN({
 							style : {
 								opacity : 0,
