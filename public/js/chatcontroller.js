@@ -1193,7 +1193,7 @@ global.ChatController = OBJECT({
 												}));
 
 												function getSiteName(url) {
-													return url.split('/')[2].replace(/w*\.youtube\.com/i, 'Youtube');
+													return url.split('/')[2].replace(/w*\.youtube\.com/i, 'Youtube').replace(/youtu\.be/i, 'Youtube');
 												}
 
 												global.bus.links.push({

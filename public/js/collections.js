@@ -7,18 +7,17 @@ global.Collections = DIV({
         right : 200,
         width : 320,
         height : 480,
-        backgroundColor : '#FFF',
         color : 'initial',
-        boxShadow : '0px 0px 16px -4px #646464',
+        // boxShadow : '0px 0px 16px -4px #646464',
         backgroundColor : '#FDFDFD',
         paddingTop : 30,
         // overflowY : 'auto',
         onDisplayResize : (width, height) => {
             if (width <= 800) {
                 return {
-                    right : 4,
-                    width : 180,
-                    height : 320
+                    right : 0,
+                    width : '100%',
+                    height : 'calc(100% - 118px)'
                 }
             } else {
                 return {
@@ -36,15 +35,29 @@ global.Collections = DIV({
             left : 5,
             fontSize : 30,
             fontWeight : 'bold',
-            color : '#646464'
+            color : '#646464',
+            onDisplayResize : (width, height) => {
+                if (width <= 800) {
+                    return {
+                        fontSize : 20,
+                        top : 0,
+                    }
+                } else {
+                    return {
+                        fontSize : 30,
+                        top : -7,
+                    }
+                }
+            }
         },
-        c : [FontAwesome.GetIcon('times')],
+        c : '링크 모아보기',
         on : {
             tap : (event, el) => {
                 el.getParent().hide();
             }
         }
-    }), content = DIV({
+    }),
+    content = DIV({
         style : {
             overflowY : 'auto',
             marginTop : '20px',
@@ -68,13 +81,25 @@ global.Collections = DIV({
                 if (result === 'link') {
                     return passenger.fileName === 'Youtube' ? 'youtube' : 'link';
                 } else {
-                    return result || '';
+                    return (
+                        /\.gif$/i.test(passenger.fileName) ?
+                            'images'
+                            :
+                            result
+                    ) || '';
                 }
             }
             const icon = FontAwesome.GetIcon({
                 style : {
                     marginRight : '.5em',
-                    color : getIconName() === 'youtube' ? '#e03030' : undefined,
+                    color : getIconName() === 'youtube' ?
+                        '#e03030'
+                        :
+                        getIconName() === 'link' ?
+                        '#3280b9'
+                        :
+                        undefined
+                        ,
                     // backgroundColor : getIconName() === 'youtube' ? '#FFF' : undefined,
                     // padding : getIconName() === 'youtube' ? 2 : undefined,
                     // borderRadius : getIconName() === 'youtube' ? 4 : undefined
@@ -93,17 +118,27 @@ global.Collections = DIV({
                 style : {
                     display: 'block',
                     margin : '8px 0px',
-                    backgroundColor : '#F4F4F4',
+                    backgroundColor : '#d6dde4',
                     color : '#646464',
                     padding : '.5em',
                 },
                 href : passenger.downloadURL,
                 target : '_blank',
+                on : {
+                    tap : (event, el) => {
+                        el.addStyle({
+                            backgroundColor : '#e4d6d6'
+                        });
+                    }
+                },
                 c : [DIV({
                     c : [icon,
                     SPAN({
                         style : {
-                            // textDecoration : 'underline'
+                            color : getIconName() === 'link' ?
+                            '#3280b9'
+                            :
+                            undefined
                         },
                         c : passenger.fileName
                     })]
@@ -136,7 +171,12 @@ global.Collections = DIV({
                             }
                         },
                         src : LoadIcon.getUserIconURL(passenger.userId) === undefined ? passenger.userIconURL : LoadIcon.getUserIconURL(passenger.userId)
-                    }), passenger.name]
+                    }), SPAN({
+                        style : {
+                            color : '#000'
+                        },
+                        c : passenger.name
+                    })]
                 })]
             });
 
