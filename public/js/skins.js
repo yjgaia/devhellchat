@@ -1,7 +1,7 @@
 global.SKINS = {
 	
 	기본 : {
-		backgroundColor : '#fff',
+		backgroundColor : '#FFFFFF',
 		color : '#444',
 		nameColor : '#444',
 		systemColor : 'rgb(114, 137, 218)',

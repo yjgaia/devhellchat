@@ -3,7 +3,7 @@ global.ChatController = OBJECT({
 	init : (inner, self) => {		
 		const URL_REGEX = /(http|https|ftp|telnet|news|mms):\/[^\"\'\s()]+/i;
 		const MAX_UPLOAD_FILE_SIZE = 26214400;
-		let backColor = '#FFF';
+		const connectedTime = new Date().getTime();
 		
 		// Firebase Ref들 가져오기
 		let chatsRef = firebase.database().ref('chats');
@@ -755,13 +755,12 @@ global.ChatController = OBJECT({
 									};
 								}
 							},
-							position : 'relative',
-							backgroundColor : backColor
+							position : 'relative'
 						},
 						on : {
 							mouseover : (e, el) => {
 								el.addStyle({
-									backgroundColor : '#dfdfdf',
+									backgroundColor : '#' + (parseInt(skinData.backgroundColor.replace('#', ''), 16) - 328965).toString(16),
 								});
 
 								// 컨벤션에 올바른지 검토 필요
@@ -1062,6 +1061,9 @@ global.ChatController = OBJECT({
 								RUN(() => {
 									
 									let message = chatData.message;
+									// console.log(chatData);
+									// let cal = CALENDAR(new Date(chatData.createTime));
+									//message.getEl().title = '작성 시간 ' + cal.getHour(true) + ':' + cal.getMinute(true) + ':' + cal.getSecond(true);
 									
 									// 참피 필터링
 									if (chatStore.get('champioff') === true) {
@@ -1078,7 +1080,7 @@ global.ChatController = OBJECT({
 									if (chatData.isCalled !== true && chatData.name !== user.displayName && (message + ' ').indexOf('@' + user.displayName + ' ') !== -1) {
 										
 										// 아이폰은 지원 안함
-										if (global.Notification === undefined || Notification.permission !== 'granted') {
+										if ((global.Notification === undefined || Notification.permission !== 'granted') && (chatData.createTime || 0) > connectedTime) {
 											DELAY(() => {
 												chatsRef.push({
 													userId : user.uid,
@@ -1291,13 +1293,13 @@ global.ChatController = OBJECT({
 							style : {
 								opacity : 0,
 								fontSize : '.8em',
-								color : '#FFF',
+								color : skinData.backgroundColor,
 								fontWeight : 'bold',
 								marginRight : '4px',
 								position : 'absolute',
 								right : 0,
 								bottom : '.2em',
-								backgroundColor : '#afbbcc',
+								backgroundColor : skinData.lineColor,
 								borderRadius : '4px',
 								padding : '.25em .5em',
 								userSelect : 'none'
