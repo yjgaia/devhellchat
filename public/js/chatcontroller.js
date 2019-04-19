@@ -444,7 +444,6 @@ global.ChatController = OBJECT({
 					}
 				}),
 
-				
 				// 모아보기 버튼
 				collectionButton = A({
 					style : {
@@ -473,8 +472,7 @@ global.ChatController = OBJECT({
 							else
 								global.Collections.hide();
 						}
-					},
-
+					}
 				})],
 				
 				on : {
@@ -608,8 +606,21 @@ global.ChatController = OBJECT({
 									addSystemMessage('참피오프', '이제 참피 관련 단어 숨겨짐');
 								}
 								
+								else if (command === '욕차단') {
+									chatStore.save({
+										name : 'badwordfilteron',
+										value : true
+									});
+									addSystemMessage('욕차단', '이제 욕 차단댐');
+								}
+								
+								else if (command === '욕안차단') {
+									chatStore.remove('badwordfilteron');
+									addSystemMessage('욕안차단', '이제 욕 다 보임');
+								}
+								
 								else {
-									addSystemMessage('명령어', '/명령어, /닉네임, /접속자, /스킨, /이모티콘, /처치, /겜스버그, /레벨, /로그아웃, /참피온, /참피오프');
+									addSystemMessage('명령어', '/명령어, /닉네임, /접속자, /스킨, /이모티콘, /처치, /겜스버그, /레벨, /로그아웃, /참피온, /참피오프, /욕차단, /욕안차단');
 								}
 							}
 							
@@ -1068,6 +1079,14 @@ global.ChatController = OBJECT({
 									// 참피 필터링
 									if (chatStore.get('champioff') === true) {
 										message = UTIL.champiFilter(message);
+									}
+									
+									// 욕 필터링
+									if (chatStore.get('badwordfilteron') === true) {
+										message = BadWordFilter.Replace({
+											text : message,
+											language : 'ko'
+										});
 									}
 									
 									let originMessage = message;
