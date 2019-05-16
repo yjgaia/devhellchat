@@ -226,6 +226,7 @@ global.ChatController = OBJECT({
 					name : 'message',
 					placeholder : '메시지 입력 ㄱㄱ',
 					isOffAutocomplete : true,
+					isOffAutocapitalize : true,
 					on : {
 						keydown : (e) => {
 							if (e.getKey() === 'Escape') {
