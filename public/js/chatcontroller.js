@@ -9,6 +9,7 @@ global.ChatController = OBJECT({
 		let chatsRef = firebase.database().ref('chats');
 		let iconsRef = firebase.storage().ref('icons');
 		let chatUploadsRef = chatUploadApp.storage().ref('uploads');
+		let chatUploads2Ref = chatUploadApp2.storage().ref('uploads');
 		
 		// 스킨 설정
 		let chatStore = STORE('DevHellChat');
@@ -194,7 +195,9 @@ global.ChatController = OBJECT({
 			// 메시지 입력 폼
 			let messageInput;
 			let uploadInput;
+			let uploadInput2;
 			let uploadButton;
+			let uploadButton2;
 			let semiMenu;
 			let collectionButton;
 			
@@ -297,7 +300,7 @@ global.ChatController = OBJECT({
 				A({
 					style : {
 						position : 'absolute',
-						right : '3em',
+						right : 70,
 						bottom : 0,
 						padding : 8,
 						color : '#ccc',
@@ -318,6 +321,7 @@ global.ChatController = OBJECT({
 						tap : () => {
 							
 							// 설정 창 띄우기
+							let uploadInput;
 							let iconPreview;
 							let description;
 							Yogurt.Alert({
@@ -416,11 +420,38 @@ global.ChatController = OBJECT({
 					}
 				}),
 				
+				uploadInput2 = INPUT({
+					style : {
+						position : 'fixed',
+						left : -999999,
+						top : -999999
+					},
+					type : 'file',
+					on : {
+						change : () => {
+							let file = uploadInput2.getEl().files[0];
+							
+							if (file !== undefined) {
+								
+								if (file.size !== undefined && file.size <= MAX_UPLOAD_FILE_SIZE) {
+									uploadFile2(file);
+									uploadInput2.setValue('');
+								}
+								
+								else {
+									alert('용량이 너무큼! 최대 용량 ' + INTEGER(MAX_UPLOAD_FILE_SIZE / 1024 / 1024) + 'MB 임');
+									uploadInput2.setValue('');
+								}
+							}
+						}
+					}
+				}),
+				
 				// 업로드 버튼
 				uploadButton = A({
 					style : {
 						position : 'absolute',
-						right : 10,
+						right : 40,
 						bottom : 0,
 						padding : 8,
 						color : '#ccc',
@@ -443,12 +474,40 @@ global.ChatController = OBJECT({
 						}
 					}
 				}),
+				
+				// 업로드 버튼2
+				uploadButton2 = A({
+					style : {
+						position : 'absolute',
+						right : 10,
+						bottom : 0,
+						padding : 8,
+						color : '#ccc',
+						fontSize : 16
+					},
+					c : FontAwesome.GetIcon('upload'),
+					on : {
+						mouseover : (e, button) => {
+							button.addStyle({
+								color : '#999'
+							});
+						},
+						mouseout : (e, button) => {
+							button.addStyle({
+								color : '#ccc'
+							});
+						},
+						tap : () => {
+							uploadInput2.select();
+						}
+					}
+				}),
 
 				// 모아보기 버튼
 				collectionButton = A({
 					style : {
 						position : 'absolute',
-						right : '5.5em',
+						right : 100,
 						bottom : 0,
 						padding : 8,
 						color : '#ccc',
@@ -676,6 +735,46 @@ global.ChatController = OBJECT({
 							name : user.displayName,
 							userIconURL : ConnectionController.getUserIconURL(),
 							uploadServer : 'chatUploadApp',
+							fileId : fileId,
+							fileName : file.name,
+							downloadURL : downloadURL,
+							isImage : file.type.indexOf('image') !== -1
+						});
+					});
+				});
+			};
+			
+			// 파일 업로드2 처리
+			let uploadFile2 = (file) => {
+				
+				let fileId = UUID();
+				
+				let uploadTask = chatUploads2Ref.child(fileId).child(file.name).put(file, {
+					cacheControl : 'public,max-age=31536000'
+				});
+				
+				uploadTask.on('state_changed', (snapshot) => {
+					uploadButton2.empty();
+					uploadButton2.append(INTEGER((snapshot.bytesTransferred / snapshot.totalBytes) * 100));
+				}, () => {
+					uploadButton2.empty();
+					uploadButton2.append(FontAwesome.GetIcon('upload'));
+					uploadButton2.addStyle({
+						color : '#ccc'
+					});
+				}, () => {
+					uploadButton2.empty();
+					uploadButton2.append(FontAwesome.GetIcon('upload'));
+					uploadButton2.addStyle({
+						color : '#ccc'
+					});
+					
+					uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+						chatsRef.push({
+							userId : user.uid,
+							name : user.displayName,
+							userIconURL : ConnectionController.getUserIconURL(),
+							uploadServer : 'chatUploadApp2',
 							fileId : fileId,
 							fileName : file.name,
 							downloadURL : downloadURL,
@@ -1337,8 +1436,12 @@ global.ChatController = OBJECT({
 				// 오래된 메시지 삭제
 				if (chatDataSet.length > 100) {
 					
-					if (chatDataSet[0].fileId !== undefined) {
+					if (chatDataSet[0].fileId !== undefined && chatDataSet[0].uploadServer === 'chatUploadApp') {
 						chatUploadsRef.child(chatDataSet[0].fileId).delete();
+					}
+					
+					if (chatDataSet[0].fileId !== undefined && chatDataSet[0].uploadServer === 'chatUploadApp2') {
+						chatUploads2Ref.child(chatDataSet[0].fileId).delete();
 					}
 					
 					chatsRef.child(chatDataSet[0].key).remove();
@@ -1356,7 +1459,7 @@ global.ChatController = OBJECT({
 						
 						if (file.size !== undefined && file.size <= MAX_UPLOAD_FILE_SIZE) {
 							if (confirm('복사한 이미지 업로드 ㄱㄱ?') === true) {
-								uploadFile(file);
+								uploadFile2(file);
 							}
 						}
 						
@@ -1394,7 +1497,7 @@ global.ChatController = OBJECT({
 					EACH(e.getFiles(), (file) => {
 						
 						if (file.size !== undefined && file.size <= MAX_UPLOAD_FILE_SIZE) {
-							uploadFile(file);
+							uploadFile2(file);
 						}
 						
 						else {
