@@ -222,7 +222,7 @@ global.ChatController = OBJECT({
 						color : skinData.color,
 						onDisplayResize : (width) => {
 							return {
-								width : Layout.getContent().getWidth() - 125
+								width : Layout.getContent().getWidth() - 145
 							};
 						}
 					},
