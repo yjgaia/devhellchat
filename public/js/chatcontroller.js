@@ -169,7 +169,7 @@ global.ChatController = OBJECT({
 			
 			// 공지사항 출력
 			let showNotice = self.showNotice = () => {
-				addSystemMessage('공지', '한국 도메인 1년 무료 이벤트 하길래 http://헬쳇.한국 만들었음. 1년간 접속가능여');
+				addSystemMessage('공지', '갓이어베이스에서 web.app 도메인을 제공하기 시작했으므로 https://devhellchat.web.app 이걸루다가 접속해주세여ㅋㅋ');
 			};
 			
 			// 화면 크기가 바뀌면 스크롤 맨 아래로

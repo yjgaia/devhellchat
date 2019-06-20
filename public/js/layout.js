@@ -52,6 +52,7 @@ global.Layout = OBJECT({
 				
 				title : DIV({
 					style : {
+						marginTop : -2,
 						marginLeft : -15,
 						userSelect : 'none'
 					},
@@ -74,13 +75,6 @@ global.Layout = OBJECT({
 								menuLayout.hideRightMenu();
 							}
 						}
-					}), SPAN({
-						style : {
-							marginLeft : 7,
-							color : '#666',
-							fontSize : 18
-						},
-						c : '0.5'
 					})]
 				})
 			}),
@@ -150,48 +144,6 @@ global.Layout = OBJECT({
 						menuLayout.hideRightMenu();
 					}
 				}
-			}));
-			
-			menu.append(A({
-				style : {
-					display : 'block',
-					borderBottom : '1px solid #666',
-					padding : 10
-				},
-				c : '개발 노트 (개발중)'
-			}));
-			
-			menu.append(A({
-				style : {
-					display : 'block',
-					borderBottom : '1px solid #666',
-					padding : 10
-				},
-				c : '유용한 링크 (개발중)'
-			}));
-			
-			menu.append(A({
-				style : {
-					display : 'block',
-					borderBottom : '1px solid #666',
-					padding : 10
-				},
-				c : '유게짱',
-				on : {
-					tap : () => {
-						GO('u-gay');
-						menuLayout.hideRightMenu();
-					}
-				}
-			}));
-			
-			menu.append(A({
-				style : {
-					display : 'block',
-					borderBottom : '1px solid #666',
-					padding : 10
-				},
-				c : '기능 추가 요청 (개발중)'
 			}));
 			
 			recentlyUserList.append(DIV({
