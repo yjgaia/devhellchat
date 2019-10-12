@@ -1,7 +1,7 @@
 RUN(() => {
 	
 	MATCH_VIEW({
-		uri : '',
+		uri : ['', '2.html'],
 		target : CLASS({
 			preset : () => {
 				return VIEW;

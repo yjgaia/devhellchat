@@ -1,6 +1,7 @@
 global.ChatController = OBJECT({
 	
-	init : (inner, self) => {		
+	init : (inner, self) => {
+		
 		const URL_REGEX = /(http|https|ftp|telnet|news|mms):\/[^\"\'\s()]+/i;
 		const MAX_UPLOAD_FILE_SIZE = 26214400;
 		const connectedTime = new Date().getTime();
