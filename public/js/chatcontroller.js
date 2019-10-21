@@ -696,13 +696,26 @@ global.ChatController = OBJECT({
 			messageInput.focus();
 			
 			// 로딩 이미지
-			let loading = IMG({
+			let loading = DIV({
 				style : {
 					position : 'absolute',
 					left : 5,
-					bottom : 0
+					bottom : global.is2 === true ? 0 : 2,
+					color : skinData.systemColor,
+					fontWeight : 'bold',
+					lineHeight : 0
 				},
-				src : '/resource/loading.svg'
+				c : [IMG({
+					src : '/resource/loading.svg'
+				}), global.is2 === true ? undefined : P({
+					c : ['접속이 안될땐 ', A({
+						style : {
+							textDecoration : 'underline'
+						},
+						href : '2.html',
+						c : '대피소'
+					}), '로~']
+				})]
 			}).appendTo(messageList);
 			
 			// 파일 업로드 처리
